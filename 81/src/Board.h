@@ -16,6 +16,8 @@
 
 #define APPLY_GREY(x) Log("\033[38;5;13m"); Log(x); Log("\033[0m")
 
+#define CLEAR_SCREEN() Log("\33[H\33[2J")
+
         // "\033[38;5;{ID}m" foreground color
         // "\033[48;5;{ID}m" background color
 
