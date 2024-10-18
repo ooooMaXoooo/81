@@ -25,7 +25,7 @@ Game::~Game()
 
 void Game::Update()
 {
-    std::cout << "\n\n########################################\n\n" << std::flush;
+    CLEAR_SCREEN();
 
     //remove GreyTiles of other players
     m_Players[m_Turn == 0 ? m_NbPlayer - 1 : m_Turn - 1]->ClearGreyTiles();
