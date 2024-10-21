@@ -25,7 +25,11 @@ Game::~Game()
 
 void Game::Update()
 {
-    CLEAR_SCREEN();
+    //CLEAR_SCREEN();
+    LOG_STARS(30);
+    std::cout << "\n\nscore de Player 1 : " << m_Players[0]->score() << '\n';
+    std::cout << "score de Player 2 : " << m_Players[1]->score() << '\n';
+    std::cout << std::endl;
 
     //remove GreyTiles of other players
     m_Players[m_Turn == 0 ? m_NbPlayer - 1 : m_Turn - 1]->ClearGreyTiles();
@@ -41,6 +45,7 @@ void Game::Update()
     while(!m_Players[m_Turn]->Play());
     //m_Board->PlayAt(m_Players[m_Turn]->PlayAt(), m_Turn + 1);
     m_ShouldClose = m_Board->IsFinish();
+
 
     //next turn, nbPlayer - 1 because turn goes from 0 to nbPlayer - 1
     m_Turn = m_Turn == m_NbPlayer - 1 ? 0 : m_Turn + 1;
