@@ -16,6 +16,12 @@ Player::Player(int id, PlayerType type, std::shared_ptr<Board> board)
     : m_ID(id), m_Type(type), m_Board(board)
 {
     m_PlayedTiles.reserve(41);
+    m_NbPlayers++;
+}
+
+Player::~Player()
+{
+    m_NbPlayers--;
 }
 
 void Player::SendGreyTiles()
@@ -59,6 +65,8 @@ bool Player::Play()
     }
 
     Update_PositionScore_map(pos);
+    Update_AreaScore(pos);
+
     m_LastPos = pos;
     m_PlayedTiles.emplace_back(pos);
     // return if there is an error (in future)
@@ -69,7 +77,7 @@ bool Player::Play()
 
 float Player::score()
 {
-    return AreaScore() + LinearScore();
+    return m_AreaScore + LinearScore();
 }
 
 int Player::PlayAt_Bot(const std::vector<int>& map)
@@ -86,7 +94,7 @@ int Player::PlayAt_Human()
     do
     {
         pos = -1;
-        pos = InputInNumber(input);
+        pos = InputInNumber(input); // --> modify the string, it's passed by reference
 
         // verifiy if the tile has already been played
         // check for the last pos
@@ -111,23 +119,29 @@ int Player::PlayAt_Human()
 int Player::InputInNumber(std::string& input) const
 {
     int pos = -1;
+
+    // check that the first character is between A and I
+    //      • transform this character in a number between 0 and 8
+
+    // check that the second character is between 1 and 9
+    //      • the ascii number for '0' is 48
+    //      • lower the number by one so the character will be in [0,8]
+
+
+
     std::cout << "[player " << m_ID << "] : plays at : ";
     std::cin >> input;
 
-    try
+    while ( input.size() != 2
+         || (input[0] < 'A' || input[0] > 'A' + 8)
+         || (input[1] < '1' || input[1] > '9'))
     {
-        pos = std::stoi(input);
+        std::cout << "\n\t***** Wrong format (letter_number,  i.e. B8)*****\n" << std::endl;
+        std::cout << "[player " << m_ID << "] : plays at : ";
+        std::cin >> input;
     }
-    catch (std::invalid_argument const& ex)
-    {
-        std::cerr << "invalid argument " << ex.what() << std::endl;
-        pos = -1;
-    }
-    catch (std::out_of_range const& ex)
-    {
-        std::cerr << "out of range " << ex.what() << std::endl;
-        pos = -1;
-    }
+
+    pos = (int)(input[0] - 'A') * 9 + (int)(input[1] - '1');
 
     std::cout << "\n\n";
     return pos;
@@ -212,6 +226,7 @@ void Player::Update_PositionScore_map(uint8_t pos) {
 
     neighbors.reserve(4);
     getNeighbors(neighbors, pos);
+    // now all valid neighbors belongs to different chain
     
     const uint8_t SIZE = neighbors.size();
 
@@ -219,7 +234,8 @@ void Player::Update_PositionScore_map(uint8_t pos) {
 
     // if there is 1 neighbor, we add the current position to the chain and we update the score
     case 1:
-        m_PosScore_map[neighbors[0]]->score += 1;
+        // we are sure that all head_pos are the same for one big chain
+        m_PosScore_map[ m_PosScore_map[neighbors[0]]->head_pos ]->score += 1;
         m_PosScore_map[pos] = m_PosScore_map[neighbors[0]];
         std::cout << "1 neighbor : Adding to the branch : " << (int)m_PosScore_map[neighbors[0]]->head_pos << std::endl;
         break;
@@ -227,11 +243,12 @@ void Player::Update_PositionScore_map(uint8_t pos) {
     // if there is 0, we create a new chain with a score of 1
     case 0:
         m_PosScore_map[pos] = std::make_shared<Score_Head>(pos, 1);
-        std::cout << "0 neighbor : Creating a new branch branch : " << (int)m_PosScore_map[pos]->head_pos << std::endl;
+        std::cout << "0 neighbor : Creating a new branch : " << (int)m_PosScore_map[pos]->head_pos << std::endl;
         break;
 
     // if there is more than 2, we merge chains
     default:
+        std::cout << "2 neighbors : Merging branches: " << std::endl;
         // we handle the case with the same chain in the merge function
         mergeChains(neighbors);
         m_PosScore_map[pos] = m_PosScore_map[neighbors[0]];
@@ -319,33 +336,27 @@ void Player::getNeighbors(std::vector<uint8_t>& neighbors, uint8_t pos)
 
 void Player::mergeChains(const std::vector<uint8_t>& neighbors)
 {
-    uint8_t score = 0;
-    // size is between 2 and 4
-    const uint8_t SIZE = neighbors.size();
-
-
     // the head's position of the first chain
-    const uint8_t HEAD_POS = m_PosScore_map[neighbors[0]]->head_pos;
+    const uint8_t _MAIN_HEAD_POS = m_PosScore_map[neighbors[0]]->head_pos;
+    /*while (m_PosScore_map[main_head_pos]->head_pos != main_head_pos)
+        main_head_pos = m_PosScore_map[main_head_pos]->head_pos;*/
 
 
-    
-
-    // compute the total score
-    for (const auto& neighbor : neighbors)
-    {
-        score += m_PosScore_map[neighbor]->score;
-    }
-    // adding one for the newly placed node
-    score++;
+    // if there are no mistake, all m_PosScore_map[...]->head_pos are the same for a connected composant chain.
+    // we don't need to check if it's the first head of all
 
 
-    // updating datas in the Pos/Head map
-    m_PosScore_map[neighbors[0]]->score = score;
+    // we start at the second neighbor to merge all them into the first one
+    // we know that we have at least 2 neighbors in the vector
+
+    const uint8_t SIZE = neighbors.size();
     for (int i = 1; i < SIZE; i++)
     {
-        m_PosScore_map[neighbors[i]]->head_pos = HEAD_POS;
-        m_PosScore_map[neighbors[i]]->score = score;
+        m_PosScore_map[_MAIN_HEAD_POS]->score += m_PosScore_map[neighbors[i]]->score;
+        m_PosScore_map[neighbors[i]]->head_pos = _MAIN_HEAD_POS;
     }
+
+    m_PosScore_map[_MAIN_HEAD_POS]->score++;
 }
 
 
@@ -375,117 +386,60 @@ uint8_t Player::LinearScore() const
 
 
 
-float Player::AreaScore() const
+
+void Player::Update_AreaScore(uint8_t pos)
 {
-    std::vector<int>& board = m_Board->GetMap();
-    float score = 0;
-    std::array<std::array<int, 9>, 9> cells;
+    uint8_t score = 0;
+    uint8_t cell_row, cell_col;
+
+    // get the cell in which the player played
+    GetPosCell(pos, cell_row, cell_col);
 
 
-    // slice the board into nine 3x3 arrays
-    sliceBoard(board, &cells);
+    // look if the player own the cell
 
-
-    // look though each cells and return the number of arrays that this player owns.
-    for (int i = 0; i < 9; i++)
-    {
-        score += OwnCell(cells[i]) ? 4.5f : 0;
-    }
-
-    //return the score
-    return score;
+    score += OwnCell(cell_row, cell_col) ? 9 : 0;
 }
 
 
-void Player::sliceBoard(const std::vector<int>& board, std::array<std::array<int, 9>, 9>* const cells) const
-{
-
-    /*
-    *   posibilité de faire un boucle qui s'incrémente 3 par 3. Avec 3 affectations par tour de boucle 
-    */
-
-
-
-    const int size = board.size();
-    const uint8_t SQRT_SIZE= sqrt(size);
-
-    // the row and the column of the position in the board
-    int row{};
-    int column{};
-         
-    // the row and the column in the cell of the position in the board
-    int relative_row{};
-    int relative_column{};
-         
-    // the position in the cell based on the relative row and column
-    int relative_pos{};
-         
-    // the id of the the cell in which the position is.
-    int cell_num{};
-
-
-    for (int i = 0; i < size; i++)
-    {
-        // convert each position in 2 dimensional board
-        row = i / SQRT_SIZE;
-        column = (i - row * SQRT_SIZE);
-
-        // convert the row and the column relative to a cell
-        relative_row = row % 3;
-        relative_column = column % 3;
-
-        // convert the relative row and column into a single position in a flatten-cell
-        relative_pos = relative_row * 3 + relative_column;
-        
-
-        // we make all indices/positions to point to the first slot in their cell.
-        cell_num = i - ((relative_pos * 3) - 2 * (relative_pos % 3));
-        /*  0    3   6
-         *  27  30  33
-         *  54  57  60
-        */      
-                
-        cell_num /= 3;
-        /*  0    1    3
-         *   9   10   11
-         *  18   19   20
-        */      
-
-        cell_num -= (i / 27) * 6;
-        /*    0   1   2          
-          *   3   4   5          
-          *   6   7   8          
-         */                      
-
-  
-        (*cells)[cell_num][relative_pos] = board[i];
-    }
-}
-
-bool Player::OwnCell(const std::array<int, 9>& cell) const
+bool Player::OwnCell(uint8_t cell_row, uint8_t cell_col) const
 {
     // store how many players own a slot in the cell
     std::unordered_map<uint16_t, uint16_t> slots_count;
 
-    // look at the cell to fill the count map
-    for (int i = 0; i < 9; i++)
+    // the board on which we play
+    std::vector<int>& board = m_Board->GetMap();
+
+    // an offset to look at the good positions. i.e. the right cell
+    uint8_t offset = cell_row * 27 + cell_col * 3;
+
+    // all positions of the first cell
+    const uint8_t firstCellPos[9] = {
+         0,   1,   2,
+         9,  10,  11,
+        18,  19,  20
+    };
+
+
+    // look through each pos for the given cell
+    for (auto position : firstCellPos)
     {
-        // add 1 to the count, and checking if the key doesn't exist before
-        slots_count[cell[i]] = slots_count.contains(cell[i]) ? slots_count.at(cell[i]) + 1 :  1;
+        uint8_t owner = board[position + offset];
+        // removing blocked Tiles from our score since it doesn't matter to us
+        if (owner == -1)
+            continue;
+
+        slots_count[owner] = slots_count.contains(owner) ? slots_count.at(owner) + 1 : 1;
     }
 
-    // if we find an unplayed slot( == 0) we return false since there is place to play by someone.
-    if (slots_count.contains(0))
-    {
-        return false;
-    }
+
 
 
     // we count which player have the most slot in the cell
     uint16_t bestOwn = 0;
     uint16_t bestID = 0;
     for (const auto& [id, count] : slots_count)
-    {
+    {  
         if (count == bestOwn)
             bestID = 0;
         else if (count > bestOwn)
@@ -495,6 +449,85 @@ bool Player::OwnCell(const std::array<int, 9>& cell) const
         }
     }
 
-    // we return true if it's this player
-    return bestID == m_ID;
+    // the number that a player need to have to own a slot
+    const float MAJORITY = 9.0f / m_NbPlayers;
+
+    // if a player have more than the majority of the slot (5) he owns the cell
+    if (bestOwn > MAJORITY)
+    {
+        // we return true if it's this player
+        return bestID == m_ID;
+    }
+
+
+    // if we find an unplayed slot( == 0) we return false since there is place to play by someone.
+    // there is -1 player to represent forbidden tiles
+    if (slots_count.contains(0))
+    {
+        return false;
+    }
+
+
+    // if there is more than 3 players, we can own a slot even without the majority
+    
+    //check 
+    
+}
+
+void Player::GetPosCell(uint8_t pos, uint8_t& row, uint8_t& col) const
+{
+    const int size = m_Board->GetMap().size();
+
+    const uint8_t SQRT_SIZE = sqrt(size);
+
+    // the row and the column of the position in the board
+    int row_pos{};
+    int column_pos{};
+
+    // the row and the column in the cell of the position in the board
+    int relative_row{};
+    int relative_column{};
+
+    // the position in the cell based on the relative row and column
+    int relative_pos{};
+
+    // the id of the the cell in which the position is.
+    int cell_num{};
+
+
+
+
+    // convert each position in 2 dimensional board
+    row_pos = pos / SQRT_SIZE;
+    column_pos = (pos - row_pos * SQRT_SIZE);
+
+    // convert the row and the column relative to a cell
+    relative_row = row_pos % 3;
+    relative_column = column_pos % 3;
+
+    // convert the relative row and column into a single position in a flatten-cell
+    relative_pos = relative_row * 3 + relative_column;
+
+
+    // we make all indices/positions to point to the first slot in their cell.
+    cell_num = pos - ((relative_pos * 3) - 2 * (relative_pos % 3));
+    /*  0    3   6
+        *  27  30  33
+        *  54  57  60
+    */
+
+    cell_num /= 3;
+    /*  0    1    3
+        *   9   10   11
+        *  18   19   20
+    */
+
+    cell_num -= (pos / 27) * 6;
+    /*    0   1   2
+        *   3   4   5
+        *   6   7   8
+        */
+
+    row = cell_num / 3;
+    col = cell_num % 3;
 }

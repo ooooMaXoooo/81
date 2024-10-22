@@ -51,8 +51,15 @@ private:
     // store the score and the head for each slot of the player
     std::unordered_map<uint8_t, std::shared_ptr<Score_Head>> m_PosScore_map;
 
+    // the cell-related score for a player
+    uint8_t m_AreaScore = 0;
+
+    // a count of the number of players
+    inline static uint8_t m_NbPlayers;
+
 public:
     Player(int id, PlayerType type, std::shared_ptr<Board> board);
+    ~Player();
 
     void SendGreyTiles();
 
@@ -80,21 +87,25 @@ private:
 
 
     uint8_t LinearScore() const;
-    float AreaScore() const;
 
-    /// <summary>
-    /// convert the board into an array of cells wich are represented by an array of 9 integers
-    /// </summary>
-    /// <param name="board">: the board to slice</param>
-    /// <param name="cells">: a pointer to an array of 9 cells (an array of 9 arrays of 9 integers)</param>
-    void sliceBoard(const std::vector<int>& board, std::array<std::array<int, 9>, 9>* const cells) const;
+
+    void Update_AreaScore(uint8_t pos);
     
     /// <summary>
-    /// return true if the player owns the majority of slots in a given cell
+    /// return true if the player owns the majority of slots in a given cell ~~~ change formulation
     /// </summary>
-    /// <param name="cell">: the cell to check</param>
+    /// <param name="cell_row">: the cell's row</param>
+    /// <param name="cell_col">: the cell's column</param>
     /// <returns>true if the player owns the cells</returns>
-    bool OwnCell(const std::array<int, 9>& cell) const;
+    bool OwnCell(uint8_t cell_row, uint8_t cell_col) const;
+
+    /// <summary>
+    /// give the row and the column for cell for a given position.
+    /// </summary>
+    /// <param name="pos"> : the position where the player played</param>
+    /// <param name="row"> : the row of the cell. Passed by reference</param>
+    /// <param name="col"> : the column of the cell. Passed by reference</param>
+    void GetPosCell(uint8_t pos, uint8_t& row, uint8_t& col) const;
 
 };
 

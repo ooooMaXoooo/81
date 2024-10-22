@@ -19,14 +19,14 @@ void Board::Display() const
     std::cout << "  \t";
     for (int i = 0; i < m_Size; ++i)
     {
-        Log(i);
+        Log(i + 1);
         std::cout << " ";
     }
     Log(std::endl);
     for (int i = 0; i < m_Size * m_Size; ++i)
     {
         if (i % 9 == 0)
-            std::cout << '\n' << i << '\t';
+            std::cout << '\n' << (char)(i/9 + 65) << '\t';
 
         if (m_Map[i] == 1)
         {
