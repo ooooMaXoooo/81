@@ -52,3 +52,23 @@ void Game::Update()
     //next turn, nbPlayer - 1 because turn goes from 0 to nbPlayer - 1
     m_Turn = m_Turn == m_NbPlayer - 1 ? 0 : m_Turn + 1;
 }
+
+bool Game::ShouldClose() const
+{
+    if (m_ShouldClose)
+    {
+        CLEAR_SCREEN();
+        m_Board->Display();
+        std::cout << "\n\nLinear Score de Player 1  :\t" << (int)m_Players[0]->LinearScore() << '\n';
+        std::cout << "AreaScore de player 1     :\t" << m_Players[0]->AreaScore();
+        std::cout << "\nTotal Score for J1        : " << m_Players[0]->score();
+
+        std::cout << "\n\nLinear Score de Player 2  :\t" << (int)m_Players[1]->LinearScore() << '\n';
+        std::cout << "AreaScore de player 2     :\t" << m_Players[1]->AreaScore() << "\n\n";
+        std::cout << "\nTotal Score for J2        : " << m_Players[1]->score();
+        std::cout << std::endl;
+    }
+
+
+    return m_ShouldClose;
+}

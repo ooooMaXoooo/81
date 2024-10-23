@@ -119,4 +119,3 @@ private:
     void convertPosNumber_to_Char(uint8_t pos, std::string* str_out) const;
     //void convertPosChar_to_Number() const;
 };
-
