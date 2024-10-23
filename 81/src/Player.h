@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <memory>
+#include <string>
 #include <array>
 #include <unordered_map>
 
@@ -54,6 +55,9 @@ private:
     // the cell-related score for a player
     uint8_t m_AreaScore = 0;
 
+    // the array to store which area we own
+    std::array<bool, 9> m_AreasStorage;
+
     // a count of the number of players
     inline static uint8_t m_NbPlayers;
 
@@ -65,11 +69,15 @@ public:
 
     void ClearGreyTiles();
 
-    bool Play();
+    void Play();
 
     void SetPlayerType(PlayerType type) { m_Type = type; }
 
     float score();
+
+
+    uint8_t LinearScore() const;
+    float AreaScore() const { return m_AreaScore * 0.5; }
 
 private:
     int PlayAt_Bot(const std::vector<int>& map);
@@ -86,7 +94,6 @@ private:
     void mergeChains(const std::vector<uint8_t>& neighbors);
 
 
-    uint8_t LinearScore() const;
 
 
     void Update_AreaScore(uint8_t pos);
@@ -107,5 +114,9 @@ private:
     /// <param name="col"> : the column of the cell. Passed by reference</param>
     void GetPosCell(uint8_t pos, uint8_t& row, uint8_t& col) const;
 
+    uint8_t findHead(uint8_t pos) const;
+
+    void convertPosNumber_to_Char(uint8_t pos, std::string* str_out) const;
+    //void convertPosChar_to_Number() const;
 };
 

@@ -62,7 +62,7 @@ void Board::Display() const
 TileType Board::Update(int pos, int player)
 {
     m_Map[pos] = player;
-    return TileType::Free;
+    return TileType::PlayedTile;
 }
 
 

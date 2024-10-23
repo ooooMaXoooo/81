@@ -1,11 +1,10 @@
 #include "Player.h"
 
-#include <string>
-
 #include "data_structures/Pile.h"
 #include "data_structures/File.h"
 #include "utils.h"
 
+#include <assert.h>
 
 std::vector<int> Player::m_PlayedTiles;
 
@@ -13,10 +12,12 @@ std::vector<int> Player::m_PlayedTiles;
 
 
 Player::Player(int id, PlayerType type, std::shared_ptr<Board> board)
-    : m_ID(id), m_Type(type), m_Board(board)
+    : m_ID(id), m_Type(type), m_Board(board), m_AreaScore(0)
 {
     m_PlayedTiles.reserve(41);
     m_NbPlayers++;
+
+    m_AreasStorage.fill(false);
 }
 
 Player::~Player()
@@ -45,7 +46,7 @@ void Player::ClearGreyTiles()
     }
 }
 
-bool Player::Play()
+void Player::Play()
 {
     // update greyTile here and not in the main game loop ?
 
@@ -64,20 +65,21 @@ bool Player::Play()
         break;
     }
 
-    Update_PositionScore_map(pos);
-    Update_AreaScore(pos);
 
     m_LastPos = pos;
     m_PlayedTiles.emplace_back(pos);
     // return if there is an error (in future)
     // TODO : handle potential errors
     m_Board->Update(pos, m_ID);
-    return true;
+
+
+    Update_PositionScore_map(pos);
+    Update_AreaScore(pos);
 }
 
 float Player::score()
 {
-    return m_AreaScore + LinearScore();
+    return m_AreaScore * 0.5 + LinearScore();
 }
 
 int Player::PlayAt_Bot(const std::vector<int>& map)
@@ -109,7 +111,11 @@ int Player::PlayAt_Human()
 
 
         if (!correct)
-            std::cout << "\nErreur impossile de jouer a " << pos << std::endl;
+        {
+            std::string formated_pos = "..";
+            convertPosNumber_to_Char(pos, &formated_pos);
+            std::cout << "\nImpossible de jouer a " << formated_pos << std::endl;
+        }
 
     } while (!correct);
 
@@ -226,34 +232,64 @@ void Player::Update_PositionScore_map(uint8_t pos) {
 
     neighbors.reserve(4);
     getNeighbors(neighbors, pos);
-    // now all valid neighbors belongs to different chain
+    // now all neighbors are valid and belong to different chain
     
     const uint8_t SIZE = neighbors.size();
 
+    uint8_t main_head_pos;
+
     switch (SIZE) {
 
-    // if there is 1 neighbor, we add the current position to the chain and we update the score
-    case 1:
-        // we are sure that all head_pos are the same for one big chain
-        m_PosScore_map[ m_PosScore_map[neighbors[0]]->head_pos ]->score += 1;
-        m_PosScore_map[pos] = m_PosScore_map[neighbors[0]];
-        std::cout << "1 neighbor : Adding to the branch : " << (int)m_PosScore_map[neighbors[0]]->head_pos << std::endl;
-        break;
+        // if there is 1 neighbor, we add the current position to the chain and we update the score
+        case 1:
+            main_head_pos = findHead(neighbors[0]);
 
-    // if there is 0, we create a new chain with a score of 1
-    case 0:
-        m_PosScore_map[pos] = std::make_shared<Score_Head>(pos, 1);
-        std::cout << "0 neighbor : Creating a new branch : " << (int)m_PosScore_map[pos]->head_pos << std::endl;
-        break;
 
-    // if there is more than 2, we merge chains
-    default:
-        std::cout << "2 neighbors : Merging branches: " << std::endl;
-        // we handle the case with the same chain in the merge function
-        mergeChains(neighbors);
-        m_PosScore_map[pos] = m_PosScore_map[neighbors[0]];
-        break;
-    }
+            m_PosScore_map[main_head_pos]->score += 1;
+            m_PosScore_map[pos] = m_PosScore_map[main_head_pos];
+            /*std::cout << "1 neighbor : Adding to the branch : " << (int)m_PosScore_map[main_head_pos]->head_pos << std::endl;
+            std::cout << "\t : score of the branch : " << (int)m_PosScore_map[main_head_pos]->score << std::endl;
+
+            for (const auto& [pos, head_score] : m_PosScore_map)
+            {
+                const auto& [head, score] = *head_score;
+
+                std::cout << "\n\nPosition :\n\t" << (int)pos << '\n';
+                std::cout << "Head position :\n\t" << (int)head << '\n';
+                std::cout << "Score :\n\t" << (int)score << std::endl << std::endl;
+            }*/
+
+            break;
+
+        // if there is 0, we create a new chain with a score of 1
+        case 0:
+            m_PosScore_map[pos] = std::make_shared<Score_Head>(pos, 1);
+            //std::cout << "0 neighbor : Creating a new branch : " << (int)m_PosScore_map[pos]->head_pos << std::endl;
+            break;
+
+
+        // if there is more than 2, we merge chains
+        default:
+            main_head_pos = findHead(neighbors[0]);
+
+            //std::cout << "2+ neighbors : Merging branches: " << std::endl;
+            // we handle the case with the same chain in the getNeighbor function
+            mergeChains(neighbors);
+            m_PosScore_map[pos] = m_PosScore_map[main_head_pos];
+
+
+            /*for (const auto& [pos, head_score] : m_PosScore_map)
+            {
+                const auto& [head, score] = *head_score;
+
+                std::cout << "\n\nPosition :\n\t" << (int)pos << '\n';
+                std::cout << "Head position :\n\t" << (int)head << '\n';
+                std::cout << "Score :\n\t" << (int)score << std::endl << std::endl;
+            }*/
+
+            break;
+        }
+
 }
 
 void Player::getNeighbors(std::vector<uint8_t>& neighbors, uint8_t pos)
@@ -322,13 +358,14 @@ void Player::getNeighbors(std::vector<uint8_t>& neighbors, uint8_t pos)
             continue;
         }
         // we remove a neighbors if they share the same chain
-        if (std::find(head_map.begin(), head_map.end(), m_PosScore_map[neighbors[count]]->head_pos) != head_map.end())
+        uint8_t main_head_pos = findHead(neighbors[count]);
+
+        if (std::find(head_map.begin(), head_map.end(), main_head_pos) != head_map.end())
         {
             neighbors.erase(neighbors.begin() + count);
             continue;
         }
 
-        m_PosScore_map[neighbors[count]]->head_pos;
         head_map.emplace_back(m_PosScore_map[neighbors[count]]->head_pos);
         ++count;
     }
@@ -337,14 +374,7 @@ void Player::getNeighbors(std::vector<uint8_t>& neighbors, uint8_t pos)
 void Player::mergeChains(const std::vector<uint8_t>& neighbors)
 {
     // the head's position of the first chain
-    const uint8_t _MAIN_HEAD_POS = m_PosScore_map[neighbors[0]]->head_pos;
-    /*while (m_PosScore_map[main_head_pos]->head_pos != main_head_pos)
-        main_head_pos = m_PosScore_map[main_head_pos]->head_pos;*/
-
-
-    // if there are no mistake, all m_PosScore_map[...]->head_pos are the same for a connected composant chain.
-    // we don't need to check if it's the first head of all
-
+    uint8_t main_head_pos = findHead(neighbors[0]);
 
     // we start at the second neighbor to merge all them into the first one
     // we know that we have at least 2 neighbors in the vector
@@ -352,11 +382,13 @@ void Player::mergeChains(const std::vector<uint8_t>& neighbors)
     const uint8_t SIZE = neighbors.size();
     for (int i = 1; i < SIZE; i++)
     {
-        m_PosScore_map[_MAIN_HEAD_POS]->score += m_PosScore_map[neighbors[i]]->score;
-        m_PosScore_map[neighbors[i]]->head_pos = _MAIN_HEAD_POS;
+        m_PosScore_map[main_head_pos]->score += m_PosScore_map[neighbors[i]]->score;
+        m_PosScore_map[neighbors[i]]->head_pos = main_head_pos;
+        /*std::cout << "Merging chain " << (int)m_PosScore_map[neighbors[i]]->head_pos <<
+            "in " << (int)m_PosScore_map[main_head_pos]->score << '\n' << std::endl;*/
     }
 
-    m_PosScore_map[_MAIN_HEAD_POS]->score++;
+    m_PosScore_map[main_head_pos]->score++;
 }
 
 
@@ -389,7 +421,6 @@ uint8_t Player::LinearScore() const
 
 void Player::Update_AreaScore(uint8_t pos)
 {
-    uint8_t score = 0;
     uint8_t cell_row, cell_col;
 
     // get the cell in which the player played
@@ -397,15 +428,21 @@ void Player::Update_AreaScore(uint8_t pos)
 
 
     // look if the player own the cell
+    bool isOwning = OwnCell(cell_row, cell_col);
 
-    score += OwnCell(cell_row, cell_col) ? 9 : 0;
+    if (isOwning)
+    {
+        m_AreaScore += 9;
+        m_AreasStorage[cell_row * 3 + cell_col] = true;
+    }
+
 }
 
 
 bool Player::OwnCell(uint8_t cell_row, uint8_t cell_col) const
 {
     // store how many players own a slot in the cell
-    std::unordered_map<uint16_t, uint16_t> slots_count;
+    std::unordered_map<uint8_t, uint8_t> slots_count;
 
     // the board on which we play
     std::vector<int>& board = m_Board->GetMap();
@@ -433,45 +470,144 @@ bool Player::OwnCell(uint8_t cell_row, uint8_t cell_col) const
     }
 
 
+    /*                  ALGORITHM
+    * 
+    *   • There is from 2 to 9 players 
+    *
+    *   
+    *   • We have differents notations:
+    *       • "n"  is the number of slots owned by the player who owns the most slots in the cell
+    *       • "n'" is the number of slots owned by the player who owns the most slots in the cell after the first one
+    *       • "F" is the number of remaining free slots in the cell
+    *       • "n'_id" is the player who owns the most slots in the cell after the first one.
+    *               We make it 10 if two players are at this rank
+    * 
+    * 
+    *   - Algorithm :
+    * 
+    *       • if we previously own the cell, return false to don't add "infinitly" points
+    *       
+    *       • if the best player is "0" (i.e. free slot)
+    *           • we don't know the cell's owner
+    * 
+    *       (compute n here)
+    *       (compute n' here)
+    *       (compute n'_id here)
+    * 
+    *       • Else if the cell is full (F = 0)  --->  don't need F since we just check if it exist in the map
+    *           • The player who owns the most cell is the owner of the cell.
+    *       
+    *       • Else if 5 <= n  (n > 4 for computations)
+    *           • The player who owns the most cell is the owner of the cell.
+    * 
+    *       • Else
+    *           (compute F here)   ---> we just need to look in the map since we know it exist
+    *           • if n = 2
+    *               • We don't know the cell's owner
+    * 
+    *           • Else if F = n-1
+    *               • If n = 4
+    *                   • We don't know the cell's owner
+    *               • Else (n = 3)
+    *                   • If n'_id = 0
+    *                       • The player who owns the most cell is the owner of the cell.
+    *                   • Else
+    *                       • We don't know the cell's owner
+    * 
+    *           • Else if F = 1
+    *               • If n' > n-2
+    *                   • We don't know the cell's owner
+    *               • Else
+    *                   • The player who owns the most cell is the owner of the cell.
+    *           
+    *           • Else ( ==> F = 2)
+    *               • If n' < n-2
+    *                   • The player who owns the most cell is the owner of the cell.
+    *               • Else
+    *                   • We don't know the cell's owner
+    * 
+    */
+
+    if (m_AreasStorage[cell_col + cell_row * 3])
+        return false;
 
 
-    // we count which player have the most slot in the cell
-    uint16_t bestOwn = 0;
-    uint16_t bestID = 0;
+    // we count which player have the most slot in the cell as well as the second one
+    int16_t best = -1, secondBest = -1;
+    int16_t bestID = -1, secondBestID = -1;
     for (const auto& [id, count] : slots_count)
-    {  
-        if (count == bestOwn)
+    {
+        if (count == best)
             bestID = 0;
-        else if (count > bestOwn)
+        else if (count > best)
         {
             bestID = id;
-            bestOwn = count;
+            best = count;
+        }
+        else //  count < best
+        {
+            if (count == secondBest)
+            {
+                // in the case where there is two 2nd best, we ignore "0"
+                if (id == 0)
+                    continue;
+                secondBestID = 10;
+            }
+            else if (count > secondBest)
+            {
+                secondBest = count;
+                secondBestID = id;
+            }
         }
     }
 
-    // the number that a player need to have to own a slot
-    const float MAJORITY = 9.0f / m_NbPlayers;
 
-    // if a player have more than the majority of the slot (5) he owns the cell
-    if (bestOwn > MAJORITY)
+    // full cell --> we know the owner
+    if (!slots_count.contains(0))
     {
-        // we return true if it's this player
         return bestID == m_ID;
     }
 
+    // if n >= 5  --> we know the owner
+    if (best > 4)
+        return bestID == m_ID;
 
-    // if we find an unplayed slot( == 0) we return false since there is place to play by someone.
-    // there is -1 player to represent forbidden tiles
-    if (slots_count.contains(0))
+
+
+    uint8_t freeSlots = slots_count.at(0);
+    
+    // if n = 2 --> we don't know the owner
+    if (best == 2)
+        return false;
+
+    // when there is n-1 free slots
+    if (freeSlots == best - 1)
     {
+        if (best == 4)
+            return false;
+
+        if (secondBestID == 0)
+            return bestID == m_ID;
+
         return false;
     }
 
+    // when there is only one free slots
+    if (freeSlots == 1)
+    {
+        // if n' > n-2  --> we don't know the owner
+        if (secondBest > best - 2)
+            return false;
 
-    // if there is more than 3 players, we can own a slot even without the majority
-    
-    //check 
-    
+        return bestID == m_ID;
+    }
+
+    // we know that freeSlots = 2
+    // if n' < n-2  -->  we know the owner
+    if (secondBest < best - 2)
+        return bestID == m_ID;
+
+    return false;
 }
 
 void Player::GetPosCell(uint8_t pos, uint8_t& row, uint8_t& col) const
@@ -530,4 +666,22 @@ void Player::GetPosCell(uint8_t pos, uint8_t& row, uint8_t& col) const
 
     row = cell_num / 3;
     col = cell_num % 3;
+}
+
+uint8_t Player::findHead(uint8_t pos) const
+{
+    assert(m_PosScore_map.contains(pos));
+
+    uint8_t main_head_pos = m_PosScore_map.at(pos)->head_pos;
+
+    while (m_PosScore_map.at(main_head_pos)->head_pos != main_head_pos)
+        main_head_pos = m_PosScore_map.at(main_head_pos)->head_pos;
+
+    return main_head_pos;
+}
+
+void Player::convertPosNumber_to_Char(uint8_t pos, std::string* str_out) const
+{
+    (*str_out)[0] = 'A' + pos / 9;
+    (*str_out)[1] = '1' + pos % 9;
 }

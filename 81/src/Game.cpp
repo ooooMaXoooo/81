@@ -25,11 +25,13 @@ Game::~Game()
 
 void Game::Update()
 {
-    //CLEAR_SCREEN();
-    LOG_STARS(30);
-    std::cout << "\n\nscore de Player 1 : " << m_Players[0]->score() << '\n';
-    std::cout << "score de Player 2 : " << m_Players[1]->score() << '\n';
-    std::cout << std::endl;
+    CLEAR_SCREEN();
+    /*std::cout << "\n\nLinear Score de Player 1  :\t" << (int)m_Players[0]->LinearScore() << '\n';
+    std::cout << "AreaScore de player 1     :\t" << m_Players[0]->AreaScore();
+
+    std::cout << "\n\nLinear Score de Player 2  :\t" << (int)m_Players[1]->LinearScore() << '\n';
+    std::cout << "AreaScore de player 2     :\t" << m_Players[1]->AreaScore() << "\n\n";
+    std::cout << std::endl;*/
 
     //remove GreyTiles of other players
     m_Players[m_Turn == 0 ? m_NbPlayer - 1 : m_Turn - 1]->ClearGreyTiles();
@@ -42,7 +44,7 @@ void Game::Update()
 
 
     //check if the pos is correct <--> return value
-    while(!m_Players[m_Turn]->Play());
+    m_Players[m_Turn]->Play();
     //m_Board->PlayAt(m_Players[m_Turn]->PlayAt(), m_Turn + 1);
     m_ShouldClose = m_Board->IsFinish();
 
