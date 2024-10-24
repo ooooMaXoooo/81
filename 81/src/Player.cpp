@@ -65,11 +65,11 @@ void Player::Play()
         break;
     }
 
+    if (m_Board->IsFinish())
+        return;
 
     m_LastPos = pos;
     m_PlayedTiles.emplace_back(pos);
-    // return if there is an error (in future)
-    // TODO : handle potential errors
     m_Board->Update(pos, m_ID);
 
 
@@ -116,6 +116,9 @@ int Player::PlayAt_Human()
             convertPosNumber_to_Char(pos, &formated_pos);
             std::cout << "\nImpossible de jouer a " << formated_pos << std::endl;
         }
+
+        if (m_Board->IsFinish())
+            correct = true;
 
     } while (!correct);
 
