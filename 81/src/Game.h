@@ -2,17 +2,23 @@
 
 
 #include <stdexcept>
+#include <string>
 #include <memory>
 
 #include "Board.h"
-#include "Player.h"
+#include "Human.h"
+#include "NeuralBot.h"
 
 
 class Game
 {
 private:
+    // all players
+    std::vector<std::unique_ptr<Player>> m_Players;
+
     // the board on which we play
     std::shared_ptr<Board> m_Board;
+
 
     // select the player who is playing 
     // 0 for player 1
@@ -25,11 +31,9 @@ private:
     // set to true to exit the app
     bool m_ShouldClose = false;
 
-    // all players
-    std::vector<std::unique_ptr<Player>> m_Players;
 
 public:
-    Game(int nbPlayer = 2);
+    Game(const char* format = "2PB");
 
     ~Game();
 

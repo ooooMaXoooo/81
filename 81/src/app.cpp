@@ -5,19 +5,16 @@
 
 #include "Game.h"
 
-/*
-* changer le calcul du score de cellules des joueurs pour le mettre au runtime
-*/
-
 
 int main(int argc, char *argv[])
 {
-	Game game;
+	Game game{ "2PP" };
 	
 	while(!game.ShouldClose())
 	{
 	    game.Update();
 	    //game.Render();
 	}
+	
 	return EXIT_SUCCESS;
 }

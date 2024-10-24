@@ -11,12 +11,6 @@
 
 #define LOG_STARS(x) for(int i=0;i<x;++i) {Log('*');} Log(std::endl);
 
-enum class PlayerType
-{
-    Human,
-    Bot
-};
-
 struct Score_Head
 {
     uint8_t head_pos;
@@ -32,9 +26,7 @@ struct Score_Head
 
 class Player
 {
-private:
-    PlayerType m_Type;
-
+protected:
     int m_ID; // starting at 1
     //float m_Score = 0;
 
@@ -62,16 +54,14 @@ private:
     inline static uint8_t m_NbPlayers;
 
 public:
-    Player(int id, PlayerType type, std::shared_ptr<Board> board);
+    Player(std::shared_ptr<Board> board);
     ~Player();
 
     void SendGreyTiles();
 
     void ClearGreyTiles();
 
-    void Play();
-
-    void SetPlayerType(PlayerType type) { m_Type = type; }
+    virtual void Play();
 
     float score();
 
@@ -79,14 +69,7 @@ public:
     uint8_t LinearScore() const;
     float AreaScore() const { return m_AreaScore * 0.5; }
 
-private:
-    int PlayAt_Bot(const std::vector<int>& map);
-
-    int PlayAt_Human();
-
-
-    int InputInNumber(std::string& input) const;
-
+protected:
     void UpdateGreyTiles();
 
     void Update_PositionScore_map(uint8_t pos);

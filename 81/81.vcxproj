@@ -135,6 +135,8 @@
     <ClCompile Include="src\app.cpp" />
     <ClCompile Include="src\Board.cpp" />
     <ClCompile Include="src\Game.cpp" />
+    <ClCompile Include="src\Human.cpp" />
+    <ClCompile Include="src\NeuralBot.cpp" />
     <ClCompile Include="src\Player.cpp" />
     <ClCompile Include="utils\data_structures\File.cpp" />
     <ClCompile Include="utils\data_structures\Pile.cpp" />
@@ -142,6 +144,8 @@
   <ItemGroup>
     <ClInclude Include="src\Board.h" />
     <ClInclude Include="src\Game.h" />
+    <ClInclude Include="src\Human.h" />
+    <ClInclude Include="src\NeuralBot.h" />
     <ClInclude Include="src\Player.h" />
     <ClInclude Include="utils\data_structures\Element.h" />
     <ClInclude Include="utils\data_structures\File.h" />
