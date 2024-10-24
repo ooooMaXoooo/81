@@ -5,6 +5,10 @@
 
 #include "Game.h"
 
+/*
+* changer le calcul du score de cellules des joueurs pour le mettre au runtime
+*/
+
 
 int main(int argc, char *argv[])
 {
@@ -15,6 +19,5 @@ int main(int argc, char *argv[])
 	    game.Update();
 	    //game.Render();
 	}
-	
 	return EXIT_SUCCESS;
 }

@@ -107,6 +107,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)utils</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -135,12 +136,16 @@
     <ClCompile Include="src\Board.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\Player.cpp" />
-    <ClCompile Include="utils\utils.cpp" />
+    <ClCompile Include="utils\data_structures\File.cpp" />
+    <ClCompile Include="utils\data_structures\Pile.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Board.h" />
     <ClInclude Include="src\Game.h" />
     <ClInclude Include="src\Player.h" />
+    <ClInclude Include="utils\data_structures\Element.h" />
+    <ClInclude Include="utils\data_structures\File.h" />
+    <ClInclude Include="utils\data_structures\Pile.h" />
     <ClInclude Include="utils\utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

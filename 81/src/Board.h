@@ -4,6 +4,9 @@
 #include <vector>
 
 
+#include<stdlib.h>
+
+
 #define Log(x) std::cout << x
 
 #define APPLY_BLUE(x) Log("\033[38;5;81m"); Log(x); Log("\033[0m")
@@ -16,7 +19,9 @@
 
 #define APPLY_GREY(x) Log("\033[38;5;13m"); Log(x); Log("\033[0m")
 
-#define CLEAR_SCREEN() Log("\33[H\33[2J")
+//#define CLEAR_SCREEN() Log("\33[H\33[2J")
+#define CLEAR_SCREEN() system("cls")
+//#define CLEAR_SCREEN() printf("\e[1;1H\e[2J")
 
         // "\033[38;5;{ID}m" foreground color
         // "\033[48;5;{ID}m" background color

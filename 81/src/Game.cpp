@@ -25,7 +25,14 @@ Game::~Game()
 
 void Game::Update()
 {
+
     CLEAR_SCREEN();
+    /*std::cout << "\n\nLinear Score de Player 1  :\t" << (int)m_Players[0]->LinearScore() << '\n';
+    std::cout << "AreaScore de player 1     :\t" << m_Players[0]->AreaScore();
+
+    std::cout << "\n\nLinear Score de Player 2  :\t" << (int)m_Players[1]->LinearScore() << '\n';
+    std::cout << "AreaScore de player 2     :\t" << m_Players[1]->AreaScore() << "\n\n";
+    std::cout << std::endl;*/
 
     //remove GreyTiles of other players
     m_Players[m_Turn == 0 ? m_NbPlayer - 1 : m_Turn - 1]->ClearGreyTiles();
@@ -37,11 +44,39 @@ void Game::Update()
     Render();
 
 
+    if (m_Board->IsFinish())
+    {
+        m_ShouldClose = true;
+        CLEAR_SCREEN();
+        return;
+    }
+
+
     //check if the pos is correct <--> return value
-    while(!m_Players[m_Turn]->Play());
+    m_Players[m_Turn]->Play();
     //m_Board->PlayAt(m_Players[m_Turn]->PlayAt(), m_Turn + 1);
-    m_ShouldClose = m_Board->IsFinish();
+
 
     //next turn, nbPlayer - 1 because turn goes from 0 to nbPlayer - 1
     m_Turn = m_Turn == m_NbPlayer - 1 ? 0 : m_Turn + 1;
+}
+
+bool Game::ShouldClose() const
+{
+    if (m_ShouldClose)
+    {
+        CLEAR_SCREEN();
+        m_Board->Display();
+        std::cout << "\n\nLinear Score de Player 1  :\t" << (int)m_Players[0]->LinearScore() << '\n';
+        std::cout << "AreaScore de player 1     :\t" << m_Players[0]->AreaScore();
+        std::cout << "\nTotal Score for J1        :\t" << m_Players[0]->score();
+
+        std::cout << "\n\nLinear Score de Player 2  :\t" << (int)m_Players[1]->LinearScore() << '\n';
+        std::cout << "AreaScore de player 2     :\t" << m_Players[1]->AreaScore() << "\n\n";
+        std::cout << "\nTotal Score for J2        :\t" << m_Players[1]->score();
+        std::cout << std::endl;
+    }
+
+
+    return m_ShouldClose;
 }

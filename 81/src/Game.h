@@ -37,5 +37,5 @@ public:
 
     void Update();
 
-    bool ShouldClose() const { return m_ShouldClose; }
+    bool ShouldClose() const;
 };
