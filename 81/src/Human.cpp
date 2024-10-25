@@ -1,10 +1,9 @@
 #include "Human.h"
 
 
-Human::Human(std::shared_ptr<Board> board)
-    : Player {board}
+Human::Human(std::shared_ptr<Board> board, uint16_t id)
+    : Player {board, id}
 {
-
 }
 
 

@@ -2,6 +2,8 @@
 
 Game::Game(const char* format)
 {
+    std::cout << "this is a instanciation" << std::endl;
+
     // read the format
     m_NbPlayer = format[0] - '0'; // convert char number to integer
 
@@ -14,13 +16,10 @@ Game::Game(const char* format)
     for (int i = 1; i < m_NbPlayer + 1; ++i)
     {
         if(format[i] == 'P')
-            m_Players.emplace_back(std::make_unique<Human>(m_Board));
+            m_Players.emplace_back(std::make_unique<Human>(m_Board, i));
         else// format[i] == 'B'
-            m_Players.emplace_back(std::make_unique<NeuralBot>(m_Board));
+            m_Players.emplace_back(std::make_unique<NeuralBot>(m_Board, i, m_NbPlayer));
     }
-
-    // make the second player as a bot
-    //m_Players[1]->SetPlayerType(PlayerType::Bot);
 }
 
 Game::~Game()
@@ -31,7 +30,7 @@ Game::~Game()
 
 void Game::Update()
 {
-    CLEAR_SCREEN();
+    //CLEAR_SCREEN();
 
     //remove GreyTiles of other players
     m_Players[m_Turn == 0 ? m_NbPlayer - 1 : m_Turn - 1]->ClearGreyTiles();
@@ -40,19 +39,8 @@ void Game::Update()
     m_Players[m_Turn]->SendGreyTiles();
 
     // temporarly call render to see the board to make a choice
-    Render();
-
-    if (m_Board->IsFinish())
-    {
-        m_ShouldClose = true;
-        CLEAR_SCREEN();
-        return;
-    }
-
-    m_Players[m_Turn]->Play();
-
-    //next turn, nbPlayer - 1 because turn goes from 0 to nbPlayer - 1
-    m_Turn = m_Turn == m_NbPlayer - 1 ? 0 : m_Turn + 1;
+    //Render();
+    //Play();    
 }
 
 bool Game::ShouldClose() const
@@ -73,4 +61,46 @@ bool Game::ShouldClose() const
 
 
     return m_ShouldClose;
+}
+
+void Game::Play()
+{
+    if (m_Board->IsFinish())
+    {
+        m_ShouldClose = true;
+        CLEAR_SCREEN();
+        return;
+    }
+
+    m_Players[m_Turn]->Play();
+
+    //next turn, nbPlayer - 1 because turn goes from 0 to nbPlayer - 1
+    m_Turn = m_Turn == m_NbPlayer - 1 ? 0 : m_Turn + 1;
+}
+
+void Game::Step()
+{
+    Update();
+    Render();
+    Play();
+}
+
+
+void Game::simulation_step()
+{
+    Update();
+    Play();
+}
+
+std::vector<uint8_t> Game::scores() const
+{
+    std::vector<uint8_t> players_score;
+
+    players_score.reserve(m_NbPlayer);
+    for (int i = 0; i < m_NbPlayer; i++)
+    {
+        players_score.emplace_back(m_Players[i]->score());
+    }
+
+    return players_score;
 }

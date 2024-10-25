@@ -5,7 +5,7 @@
 class Human : public Player
 {
 public :
-	Human(std::shared_ptr<Board> board);
+	Human(std::shared_ptr<Board> board, uint16_t id);
 
 	void Play() override;
 

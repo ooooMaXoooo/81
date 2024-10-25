@@ -13,12 +13,12 @@
 	*	slightly random changes in a genome
 	*
 	*
-	* • genetic representation of a solution
-	* • a function to generate new solutions
-	* • a selection function to choose which individuals will reproduce
-	* • a fitness function
-	* • a cross-over function
-	* • a mutation function
+	* • genetic representation of a solution									• a neural network		• OK
+	* • a function to generate new solutions									• not finished			• in progress
+	* • a selection function to choose which individuals will reproduce			• not finished			• in progress
+	* • a fitness function														• not finished			• almost done
+	* • a cross-over function													• not finished			• nothing
+	* • a mutation function														• not finished			• nothing
 	*/
 
 
@@ -28,8 +28,13 @@
 
 class NeuralBot : public Player
 {
+private :
+	NeuralNetwork m_ntw;
+
+	uint8_t m_nbPlayer;
+
 public :
-	NeuralBot(std::shared_ptr<Board> board);
+	NeuralBot(std::shared_ptr<Board> board, uint16_t id, uint8_t nbPlayers);
 
 	void Play();
 

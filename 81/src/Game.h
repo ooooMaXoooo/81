@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 
 #include <stdexcept>
 #include <string>
@@ -8,7 +9,6 @@
 #include "Board.h"
 #include "Human.h"
 #include "NeuralBot.h"
-
 
 class Game
 {
@@ -33,13 +33,23 @@ private:
 
 
 public:
-    Game(const char* format = "2PB");
+    Game(const char* format);
 
     ~Game();
 
-    void Render() const { m_Board->Display(); }
-
-    void Update();
+    void Step();
 
     bool ShouldClose() const;
+
+
+    // AI stuff
+
+    void simulation_step();
+    std::vector<uint8_t> scores() const;
+
+private :
+
+    void Render() const { m_Board->Display(); }
+    void Update();
+    void Play();
 };

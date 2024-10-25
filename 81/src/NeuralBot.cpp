@@ -2,10 +2,11 @@
 
 
 
-NeuralBot::NeuralBot(std::shared_ptr<Board> board)
-    : Player {board}
+NeuralBot::NeuralBot(std::shared_ptr<Board> board, uint16_t id, uint8_t nbPlayers)
+    : Player {board, id},
+    m_ntw(NeuralNetwork(83, 81, { 50, 50, 50 })),
+    m_nbPlayer(nbPlayers)
 {
-
 }
 
 void NeuralBot::Play()
@@ -13,8 +14,6 @@ void NeuralBot::Play()
     uint8_t pos = -1;
 
     // do stuff
-
-
 
 
 

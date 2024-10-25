@@ -11,20 +11,18 @@ std::vector<int> Player::m_PlayedTiles;
 
 
 
-Player::Player(std::shared_ptr<Board> board)
-    : m_Board(board), m_AreaScore(0)
+Player::Player(std::shared_ptr<Board> board, uint16_t id)
+    : m_Board(board), m_AreaScore(0), m_ID(id)
 {
     m_PlayedTiles.reserve(41);
-    m_NbPlayers++;
-
-    m_ID = m_NbPlayers;
+    //m_NbPlayers++;
 
     m_AreasStorage.fill(false);
 }
 
 Player::~Player()
 {
-    m_NbPlayers--;
+    //m_NbPlayers--;
 }
 
 void Player::SendGreyTiles()
@@ -407,7 +405,7 @@ bool Player::OwnCell(uint8_t cell_row, uint8_t cell_col) const
     *   • There is from 2 to 9 players 
     *
     *   
-    *   • We have differents notations:
+    *   • notations:
     *       • "n"  is the number of slots owned by the player who owns the most slots in the cell
     *       • "n'" is the number of slots owned by the player who owns the most slots in the cell after the first one
     *       • "F" is the number of remaining free slots in the cell

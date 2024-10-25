@@ -21,15 +21,18 @@ NeuralNetwork::NeuralNetwork(uint nbEntries, uint nbOutputs, std::vector<uint> d
 	m_hidden_neurons.reserve(m_nbHiddenlayers);
 	fillVectorRNG(&m_outputsBias, m_nbOutputs);
 
-	for (uint layer_indice = 0; layer_indice < m_nbHiddenlayers; layer_indice++)
+	/*for (uint layer_indice = 0; layer_indice < m_nbHiddenlayers; layer_indice++)
 	{
+		m_hidden_neurons[layer_indice];
 		m_hidden_neurons[layer_indice].reserve(dimHiddenLayers[layer_indice]);
-	}
+	}*/
 
 	// fill entries
 	for (uint i = 0; i < m_nbEntries; i++)
 	{
-		fillVectorRNG(&m_entries_weights[i], m_dim_eachHiddenLayer[0]);
+		std::vector<float> weights;
+		fillVectorRNG(&weights, m_dim_eachHiddenLayer[0]);
+		m_entries_weights.emplace_back(weights);
 	}
 
 
@@ -37,16 +40,21 @@ NeuralNetwork::NeuralNetwork(uint nbEntries, uint nbOutputs, std::vector<uint> d
 	for (uint layer_indice = 0; layer_indice < m_nbHiddenlayers; layer_indice++)
 	{
 		// fill one hidden layers
+
+		std::vector<Neuron> neurons;
+		neurons.reserve(dimHiddenLayers[layer_indice]);
+
 		for (uint neuron_indice = 0; neuron_indice < dimHiddenLayers[layer_indice]; neuron_indice++)
 		{
 			std::vector<float> weights;
-			fillVectorRNG(&weights,
-				dimHiddenLayers[ (layer_indice == m_nbHiddenlayers - 1) ?
-				m_nbOutputs
-				: dimHiddenLayers[layer_indice + 1]]);
 
-			m_hidden_neurons[layer_indice].emplace_back(weights, ((rand() % 60000) - 30000) / 10000);
+			fillVectorRNG(&weights,
+				(layer_indice == m_nbHiddenlayers - 1) ? m_nbOutputs : dimHiddenLayers[layer_indice + 1]);
+
+			neurons.emplace_back(weights, ((rand() % 60000) - 30000) / 10000);
 		}
+
+		m_hidden_neurons.emplace_back(neurons);
 	}
 }
 
@@ -66,19 +74,7 @@ NeuralNetwork::NeuralNetwork(const NeuralNetwork& NN)
 
 NeuralNetwork::NeuralNetwork(const char* filepath)
 {
-	std::ifstream file_stream;
-
-	const auto& [v_d_each_HL, d_entries, d_outputs, d_HLs, HNs, in_Weights, out_Bias] = parseFile(file_stream);
-
-	m_nbEntries = d_entries;
-	m_entries_weights = in_Weights;
-
-	m_nbOutputs = d_outputs;
-	m_outputsBias = out_Bias;
-
-	m_nbHiddenlayers = d_HLs;
-	m_dim_eachHiddenLayer = v_d_each_HL;
-	m_hidden_neurons = HNs;
+	loadFromFile(filepath);
 }
 
 std::array<float, 10> NeuralNetwork::output(const std::vector<float> entries_values)
@@ -133,7 +129,7 @@ void NeuralNetwork::addNeuron(uint layer)
 	float bias;
 	std::vector<float> weights;
 
-	bias = ((rand() % 60000) - 30000)/ 10000;
+	bias = ((rand() % 60000) - 30000)/ 10000.;
 
 	if (layer == m_nbHiddenlayers)
 	{
@@ -148,7 +144,7 @@ void NeuralNetwork::addNeuron(uint layer)
 		//create link with the previous layer
 		for (uint i = 0; i < m_dim_eachHiddenLayer[m_nbHiddenlayers - 2]; i++)
 		{
-			m_hidden_neurons[m_nbHiddenlayers - 2][i].weights.emplace_back(((rand() % 60000) - 30000) / 10000);
+			m_hidden_neurons[m_nbHiddenlayers - 2][i].weights.emplace_back(((rand() % 60000) - 30000) / 10000.);
 		}
 	}
 	else
@@ -161,19 +157,19 @@ void NeuralNetwork::addNeuron(uint layer)
 		{
 			for (uint i = 0; i < m_nbEntries; i++)
 			{
-				m_entries_weights[i].emplace_back(((rand() % 60000) - 30000) / 10000);
+				m_entries_weights[i].emplace_back(((rand() % 60000) - 30000) / 10000.);
 			}
 		}
 		else
 		{
 			for (uint i = 0; i < m_nbEntries; i++)
 			{
-				m_hidden_neurons[layer - 1][i].weights.emplace_back(((rand() % 60000) - 30000) / 10000);
+				m_hidden_neurons[layer - 1][i].weights.emplace_back(((rand() % 60000) - 30000) / 10000.);
 			}
 		}
 	}
 
-	m_hidden_neurons[m_dim_eachHiddenLayer[layer]].emplace_back(1, std::move(weights), bias);
+	m_hidden_neurons[m_dim_eachHiddenLayer[layer]].emplace_back(std::move(weights), bias);
 	
 		
 	m_dim_eachHiddenLayer[layer] += 1;
@@ -218,6 +214,23 @@ void NeuralNetwork::saveConfig(const char* filepath) const
 	const std::string config = getConfig();
 
 	file << config;
+}
+
+void NeuralNetwork::loadFromFile(const char* filepath)
+{
+	std::ifstream file_stream(filepath);
+
+	const auto& [v_d_each_HL, d_entries, d_outputs, d_HLs, HNs, in_Weights, out_Bias] = parseFile(file_stream);
+
+	m_nbEntries = d_entries;
+	m_entries_weights = in_Weights;
+
+	m_nbOutputs = d_outputs;
+	m_outputsBias = out_Bias;
+
+	m_nbHiddenlayers = d_HLs;
+	m_dim_eachHiddenLayer = v_d_each_HL;
+	m_hidden_neurons = HNs;
 }
 
 
@@ -303,7 +316,7 @@ void NeuralNetwork::fillVectorRNG(std::vector<float>* vec, uint size) const
 	vec->reserve(size);
 	for (uint i = 0; i < size; i++)
 	{
-		vec->emplace_back(((rand() % 60000) - 30000) / 10000);
+		vec->emplace_back(((rand() % 60000) - 30000) / 10000.);
 	}
 }
 
@@ -402,7 +415,7 @@ std::string&& NeuralNetwork::getConfig() const
 	// Next line is entries' weights
 	for (uint neuron_indice = 0; neuron_indice < m_nbEntries; neuron_indice++)
 	{
-		for (uint weight_indice; weight_indice < m_dim_eachHiddenLayer[0]; weight_indice++)
+		for (uint weight_indice = 0; weight_indice < m_dim_eachHiddenLayer[0]; weight_indice++)
 		{
 			config.append(std::to_string(m_entries_weights[neuron_indice][weight_indice]));
 			config.append(" ");

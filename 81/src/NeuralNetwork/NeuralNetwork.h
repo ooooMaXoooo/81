@@ -11,6 +11,18 @@
 
 typedef unsigned short uint;
 
+
+struct Neuron
+{
+	std::vector<float> weights;
+	float value;
+	float bias;
+
+	Neuron(const std::vector<float>& _weights, float _bias)
+		: value{ 1 }, weights{ _weights }, bias{ _bias }
+	{}
+};
+
 struct NNtwCaracteristics
 {
 	// dimensions
@@ -27,17 +39,6 @@ struct NNtwCaracteristics
 
 	// bias
 	std::vector<float> out_Bias;
-};
-
-struct Neuron
-{
-	std::vector<float> weights;
-	float value;
-	float bias;
-
-	Neuron(const std::vector<float>& _weights, float _bias)
-		: value{ 1 }, weights{ _weights }, bias{ _bias }
-	{}
 };
 
 class NeuralNetwork
@@ -83,6 +84,7 @@ public :
 	std::vector<uint> getHiddenLayersDimension() const { return m_dim_eachHiddenLayer; }
 
 	void saveConfig(const char* filepath) const;
+	void loadFromFile(const char* filepath);
 
 private :
 	float sigmoid(float x) const { return 1 / (1 + exp(-x)); }

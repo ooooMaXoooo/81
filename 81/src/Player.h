@@ -51,10 +51,10 @@ protected:
     std::array<bool, 9> m_AreasStorage;
 
     // a count of the number of players
-    inline static uint8_t m_NbPlayers;
+    //inline static uint8_t m_NbPlayers;
 
 public:
-    Player(std::shared_ptr<Board> board);
+    Player(std::shared_ptr<Board> board, uint16_t id);
     ~Player();
 
     void SendGreyTiles();

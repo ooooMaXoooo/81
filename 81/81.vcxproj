@@ -132,6 +132,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\GeneticTraining.cpp" />
     <ClCompile Include="src\app.cpp" />
     <ClCompile Include="src\Board.cpp" />
     <ClCompile Include="src\Game.cpp" />
@@ -143,6 +144,7 @@
     <ClCompile Include="utils\data_structures\Pile.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\GeneticTraining.h" />
     <ClInclude Include="src\Board.h" />
     <ClInclude Include="src\Game.h" />
     <ClInclude Include="src\Human.h" />
