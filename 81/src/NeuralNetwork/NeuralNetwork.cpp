@@ -1,11 +1,15 @@
 #include "NeuralNetwork.h"
 
 #include <iostream>
+#include <sstream>
+
 #include <assert.h>
+
 #include <algorithm>
 #include <functional>
-#include <fstream>
 #include <random>
+
+
 
 
 NeuralNetwork::NeuralNetwork(uint nbEntries, uint nbOutputs, std::vector<uint> dimHiddenLayers)
@@ -58,6 +62,23 @@ NeuralNetwork::NeuralNetwork(const NeuralNetwork& NN)
 	m_nbHiddenlayers      =  NN.m_nbHiddenlayers;
 	m_dim_eachHiddenLayer =  NN.m_dim_eachHiddenLayer;
 	m_hidden_neurons      =  NN.m_hidden_neurons;
+}
+
+NeuralNetwork::NeuralNetwork(const char* filepath)
+{
+	std::ifstream file_stream;
+
+	const auto& [v_d_each_HL, d_entries, d_outputs, d_HLs, HNs, in_Weights, out_Bias] = parseFile(file_stream);
+
+	m_nbEntries = d_entries;
+	m_entries_weights = in_Weights;
+
+	m_nbOutputs = d_outputs;
+	m_outputsBias = out_Bias;
+
+	m_nbHiddenlayers = d_HLs;
+	m_dim_eachHiddenLayer = v_d_each_HL;
+	m_hidden_neurons = HNs;
 }
 
 std::array<float, 10> NeuralNetwork::output(const std::vector<float> entries_values)
@@ -189,6 +210,16 @@ void NeuralNetwork::changeWeight(uint layer, uint neuron_position, uint other_ne
 	m_hidden_neurons[layer][neuron_position].weights[other_neuron_position] = value;
 }
 
+void NeuralNetwork::saveConfig(const char* filepath) const
+{
+	std::ofstream file(filepath);
+	assert(file.is_open());
+	
+	const std::string config = getConfig();
+
+	file << config;
+}
+
 
 float NeuralNetwork::computeNeuronValue(uint layer_indice, uint neuron_position) const
 {
@@ -274,5 +305,151 @@ void NeuralNetwork::fillVectorRNG(std::vector<float>* vec, uint size) const
 	{
 		vec->emplace_back(((rand() % 60000) - 30000) / 10000);
 	}
+}
+
+NNtwCaracteristics NeuralNetwork::parseFile(std::ifstream& fileStream)
+{
+	NNtwCaracteristics caracteristics;
+
+	std::string line{};
+	std::stringstream ss;
+
+
+	// copy the file into the string stream
+	assert(fileStream.is_open());
+	while (std::getline(fileStream, line))
+	{
+		ss << line << '\n';
+	}
+
+	// handle the config
+	// each dimensions
+	ss >> caracteristics.d_entries;
+	ss >> caracteristics.d_HLs;
+
+	for (uint i = 0; i < caracteristics.d_HLs; i++)
+	{
+		ss >> caracteristics.v_d_each_HL[i];
+	}
+	ss >> caracteristics.d_outputs;
+
+	// the entries' weights
+	for (uint neuron_indice = 0; neuron_indice < caracteristics.d_entries; neuron_indice++)
+	{
+		for (uint weight_indice = 0; weight_indice < caracteristics.v_d_each_HL[0]; weight_indice++)
+		{
+			ss >> caracteristics.in_Weights[neuron_indice][weight_indice];
+		}
+	}
+
+	// each hidden layer except the last one
+	for (uint layer_indice = 0; layer_indice < caracteristics.d_HLs - 1; layer_indice++)
+	{
+		for (uint neuron_indice = 0; neuron_indice < caracteristics.v_d_each_HL[layer_indice]; neuron_indice++)
+		{
+			for (uint weight_indice = 0; weight_indice < caracteristics.v_d_each_HL[layer_indice + 1]; weight_indice++)
+			{
+				ss >> caracteristics.HNs[layer_indice][neuron_indice].weights[weight_indice];
+			}
+			ss >> caracteristics.HNs[layer_indice][neuron_indice].bias;
+		}
+	}
+
+	// the last hidden layer
+	for (uint neuron_indice = 0; neuron_indice < caracteristics.v_d_each_HL[caracteristics.d_HLs - 1]; neuron_indice++)
+	{
+		for (uint weight_indice = 0; weight_indice < caracteristics.d_outputs; weight_indice++)
+		{
+			ss >> caracteristics.HNs[caracteristics.d_HLs - 1][neuron_indice].weights[weight_indice];
+		}
+		ss >> caracteristics.HNs[caracteristics.d_HLs - 1][neuron_indice].bias;
+	}
+
+	// the outputs' bias
+	for (uint neuron_indice = 0; neuron_indice < caracteristics.d_outputs; neuron_indice++)
+	{
+		ss >> caracteristics.out_Bias[neuron_indice];
+	}
+
+
+	return caracteristics;
+}
+
+std::string&& NeuralNetwork::getConfig() const
+{
+	std::string config = "";
+
+	// first line is all numbers :
+	//		• nb Entry;
+	//		• nb HiddenLayer;
+	//		• NB_HL 1;
+	//		• ...
+	//		• NB_HL max;
+	//		• nb outputs\n
+
+	config.append(std::to_string(m_nbEntries));
+	config.append(" ");
+	config.append(std::to_string(m_nbHiddenlayers));
+	config.append(" ");
+	for (uint i = 0; i < m_nbHiddenlayers; i++)
+	{
+		config.append(std::to_string(m_dim_eachHiddenLayer[i]));
+		config.append(" ");
+	}
+	config.append(std::to_string(m_nbOutputs));
+	config.append("\n");
+
+	// Next line is entries' weights
+	for (uint neuron_indice = 0; neuron_indice < m_nbEntries; neuron_indice++)
+	{
+		for (uint weight_indice; weight_indice < m_dim_eachHiddenLayer[0]; weight_indice++)
+		{
+			config.append(std::to_string(m_entries_weights[neuron_indice][weight_indice]));
+			config.append(" ");
+		}
+		config.append(" ");
+	}
+	config.append("\n");
+
+
+
+	// next lines are hidden layers
+	for (uint layer_indice = 0; layer_indice < m_nbHiddenlayers - 1; layer_indice++)
+	{
+		// we handle the last hidden layer appart
+		for (uint neuron_indice = 0; neuron_indice < m_dim_eachHiddenLayer[layer_indice]; neuron_indice++)
+		{
+			for (uint weight_indice = 0; weight_indice < m_dim_eachHiddenLayer[layer_indice + 1]; weight_indice++)
+			{
+				config.append(std::to_string(m_hidden_neurons[layer_indice][neuron_indice].weights[weight_indice]));
+				config.append(" ");
+			}
+			config.append(std::to_string(m_hidden_neurons[layer_indice][neuron_indice].bias));
+			config.append(" ");
+		}
+		config.append("\n");
+	}
+
+	// last hidden layer
+	for (uint neuron_indice = 0; neuron_indice < m_dim_eachHiddenLayer[m_nbHiddenlayers - 1]; neuron_indice++)
+	{
+		for (uint weight_indice = 0; weight_indice < m_nbOutputs; weight_indice++)
+		{
+			config.append(std::to_string(m_hidden_neurons[m_nbHiddenlayers - 1][neuron_indice].weights[weight_indice]));
+			config.append(" ");
+		}
+		config.append(std::to_string(m_hidden_neurons[m_nbHiddenlayers - 1][neuron_indice].bias));
+		config.append(" ");
+	}
+	config.append("\n");
+
+	// outputs bias
+	for (uint neuron_indice = 0; neuron_indice < m_nbOutputs; neuron_indice++)
+	{
+		config.append(std::to_string(m_outputsBias[neuron_indice]));
+		config.append(" ");
+	}
+
+	return static_cast<std::string&&>(config);
 }
 

@@ -7,7 +7,27 @@
 #include <cstdlib>
 #include <ctime>
 
+#include <fstream>
+
 typedef unsigned short uint;
+
+struct NNtwCaracteristics
+{
+	// dimensions
+	std::vector<uint> v_d_each_HL;  // dimension of every hidden layers
+	uint d_entries;  // nb of entries
+	uint d_outputs;  // nb of outputs
+	uint d_HLs;      // nb of hidden layers
+
+	// neurons arrays
+	std::vector<std::vector<Neuron>> HNs;
+
+
+	std::vector<std::vector<float>> in_Weights;
+
+	// bias
+	std::vector<float> out_Bias;
+};
 
 struct Neuron
 {
@@ -75,5 +95,7 @@ private :
 
 	void fillVectorRNG(std::vector<float>* vec, uint size) const;
 
-	std::string parseFile();
+	NNtwCaracteristics parseFile(std::ifstream& fileStream);
+
+	std::string&& getConfig() const;
 };
