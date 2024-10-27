@@ -9,7 +9,7 @@ Human::Human(std::shared_ptr<Board> board, uint16_t id)
 
 void Human::Play()
 {
-    std::vector<int>& board = m_Board->GetMap();
+    std::vector<uint>& board = m_Board->GetMap();
     uint8_t pos = -1;
     std::string input = "";
     bool correct = false;

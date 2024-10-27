@@ -14,17 +14,25 @@
 	*
 	*
 	* • genetic representation of a solution									• a neural network		• OK
-	* • a function to generate new solutions									• not finished			• in progress
-	* • a selection function to choose which individuals will reproduce			• not finished			• in progress
-	* • a fitness function														• not finished			• almost done
-	* • a cross-over function													• not finished			• nothing
-	* • a mutation function														• not finished			• nothing
+	* • a function to generate new solutions									• not finished			• OK ?
+	* • a selection function to choose which individuals will reproduce			• not finished			• OK ?
+	* • a fitness function														• not finished			• OK ?
+	* • a cross-over function													• not finished			• OK ?
+	* • a mutation function														• not finished			• OK ?
+	* • saving system															• not finished			• almost done
 	*/
 
 
 #include "Player.h"
 
 #include "NeuralNetwork/NeuralNetwork.h"
+
+enum Mutations : char
+{
+	change_weight,
+	add_neuron,
+	remove_neuron
+};
 
 class NeuralBot : public Player
 {
@@ -35,8 +43,11 @@ private :
 
 public :
 	NeuralBot(std::shared_ptr<Board> board, uint16_t id, uint8_t nbPlayers);
+	NeuralBot(const NeuralBot& neuralBot);
 
 	void Play();
 
+	NeuralNetwork* getPtr_Ntw() { return &m_ntw; }
 	
+	void mutate();
 };

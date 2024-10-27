@@ -2,7 +2,8 @@
 
 #include "Game.h"
 #include <math.h>
-
+#include "NeuralBot.h"
+#include <memory>
 
 namespace AI
 {
@@ -26,15 +27,16 @@ namespace AI
 		void train(const char* saveFile_path = "./res/NTW/neural_bot", int savePeriod = 50, int elitism = 5);
 
 	private :
-		void save();
+		void save(const char* filepath);
 
-		void nextGen();
+		//void nextGen(std::vector<NeuralBot> playerPool);
 
 
-		float fitness(bool has_won, int personnal_score, int best_score);
-		NeuralBot selection_function(const Game& game);
+		float fitness(bool has_won, int personnal_score, int best_score, int second_best_score);
 
-		void newGeneration();
+		std::array<NeuralBot, 2> reproduce(NeuralBot& bot1, NeuralBot& bot2);
+
+		void mutations(std::vector<NeuralBot>& selection);
 	};
 
 }

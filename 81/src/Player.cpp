@@ -11,7 +11,7 @@ std::vector<int> Player::m_PlayedTiles;
 
 
 
-Player::Player(std::shared_ptr<Board> board, uint16_t id)
+Player::Player(std::shared_ptr<Board> board, int id)
     : m_Board(board), m_AreaScore(0), m_ID(id)
 {
     m_PlayedTiles.reserve(41);
@@ -225,7 +225,7 @@ void Player::Update_PositionScore_map(uint8_t pos) {
 void Player::getNeighbors(std::vector<uint8_t>& neighbors, uint8_t pos)
 {
     const int BOARD_SIZE = m_Board->Size();
-    std::vector<int>& board = m_Board->GetMap();
+    std::vector<uint>& board = m_Board->GetMap();
 
     // right side
     if ((pos + 1) % BOARD_SIZE == 0)
@@ -375,7 +375,7 @@ bool Player::OwnCell(uint8_t cell_row, uint8_t cell_col) const
     std::unordered_map<uint8_t, uint8_t> slots_count;
 
     // the board on which we play
-    std::vector<int>& board = m_Board->GetMap();
+    std::vector<uint>& board = m_Board->GetMap();
 
     // an offset to look at the good positions. i.e. the right cell
     uint8_t offset = cell_row * 27 + cell_col * 3;

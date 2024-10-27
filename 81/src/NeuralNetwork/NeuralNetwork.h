@@ -21,6 +21,10 @@ struct Neuron
 	Neuron(const std::vector<float>& _weights, float _bias)
 		: value{ 1 }, weights{ _weights }, bias{ _bias }
 	{}
+
+	Neuron(const Neuron& n)
+		: value(1), weights(n.weights), bias(n.bias)
+	{}
 };
 
 struct NNtwCaracteristics
@@ -67,19 +71,20 @@ public :
 	NeuralNetwork(const NeuralNetwork& NN);
 	NeuralNetwork(const char* filepath);
 
-	/// <summary>
-	/// return the 10 best outputs given by the network
-	/// </summary>
-	/// <param name="entries_values">the value of entries</param>
-	/// <returns>the 10 best values</returns>
-	std::array<float, 10> output(const std::vector<float> entries_values);
+
+
+	std::vector<float> output(const std::vector<uint> entries_values);
 
 	void addNeuron(uint layer);
 	void removeNeuron(uint layer, uint position);
+	Neuron getNeuron(uint layer, uint neuron_position) const;
+	void changeNeuron(const Neuron& neuron, uint layer, uint neuron_position);
 
 	void changeWeight(uint layer, uint neuron_position, uint other_neuron_position, float value);
+	float getWeight(uint layer, uint neuron_position, uint weight_position);
 
 	uint getNbEntries() const { return m_nbEntries; }
+	uint getNbOutputs() const { return m_nbOutputs; }
 	uint getNbHiddenlayers() const { return m_nbHiddenlayers; }
 	std::vector<uint> getHiddenLayersDimension() const { return m_dim_eachHiddenLayer; }
 
@@ -87,11 +92,11 @@ public :
 	void loadFromFile(const char* filepath);
 
 private :
-	float sigmoid(float x) const { return 1 / (1 + exp(-x)); }
+	float sigmoid(float x) const { return 1 / (1 + exp(-0.01*x)); }
 	float ELU(float x) const { return x > 0 ? x : (exp(x) - 1); }
 
 	float computeNeuronValue(uint layer, uint position) const;
-	float computeFirstLayerNeuronValue(const std::vector<float> entries_values, uint position) const;
+	float computeFirstLayerNeuronValue(const std::vector<uint> entries_values, uint position) const;
 	float computeLastLayerNeuronValue(uint neuron_position) const;
 
 

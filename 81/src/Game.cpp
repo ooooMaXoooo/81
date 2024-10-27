@@ -2,8 +2,6 @@
 
 Game::Game(const char* format)
 {
-    std::cout << "this is a instanciation" << std::endl;
-
     // read the format
     m_NbPlayer = format[0] - '0'; // convert char number to integer
 
@@ -47,16 +45,15 @@ bool Game::ShouldClose() const
 {
     if (m_ShouldClose)
     {
-        CLEAR_SCREEN();
+        //CLEAR_SCREEN();
         m_Board->Display();
-        std::cout << "\n\nLinear Score de Player 1  :\t" << (int)m_Players[0]->LinearScore() << '\n';
-        std::cout << "AreaScore de player 1     :\t" << m_Players[0]->AreaScore();
-        std::cout << "\nTotal Score for J1        :\t" << m_Players[0]->score();
-
-        std::cout << "\n\nLinear Score de Player 2  :\t" << (int)m_Players[1]->LinearScore() << '\n';
-        std::cout << "AreaScore de player 2     :\t" << m_Players[1]->AreaScore();
-        std::cout << "\nTotal Score for J2        :\t" << m_Players[1]->score() << "\n\n";
-        std::cout << std::endl;
+        for (int i = 0; i < m_NbPlayer; i++)
+        {
+            std::cout << "\n\nLinear Score de Player "<< i+1 << "  :\t" << (int)m_Players[i]->LinearScore() << '\n';
+            std::cout << "AreaScore de player "<< i+1 << "     :\t" << m_Players[i]->AreaScore();
+            std::cout << "\nTotal Score for J"<< i+1 << "        :\t" << m_Players[i]->score();
+        }
+        std::cout << "\n\n" << std::endl;
     }
 
 
@@ -92,9 +89,9 @@ void Game::simulation_step()
     Play();
 }
 
-std::vector<uint8_t> Game::scores() const
+std::vector<float> Game::scores() const
 {
-    std::vector<uint8_t> players_score;
+    std::vector<float> players_score;
 
     players_score.reserve(m_NbPlayer);
     for (int i = 0; i < m_NbPlayer; i++)

@@ -54,7 +54,7 @@ protected:
     //inline static uint8_t m_NbPlayers;
 
 public:
-    Player(std::shared_ptr<Board> board, uint16_t id);
+    Player(std::shared_ptr<Board> board, int id);
     ~Player();
 
     void SendGreyTiles();
@@ -65,6 +65,7 @@ public:
 
     float score();
 
+    int id() const { return m_ID; }
 
     uint8_t LinearScore() const;
     float AreaScore() const { return m_AreaScore * 0.5; }

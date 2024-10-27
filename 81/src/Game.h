@@ -26,7 +26,7 @@ private:
     int m_Turn = 0;
 
     // number of players (with bots)
-    int m_NbPlayer = 2;
+    uint8_t m_NbPlayer = 2;
 
     // set to true to exit the app
     bool m_ShouldClose = false;
@@ -45,7 +45,9 @@ public:
     // AI stuff
 
     void simulation_step();
-    std::vector<uint8_t> scores() const;
+    std::vector<float> scores() const;
+    NeuralBot getBot(uint8_t id) { return *static_cast<NeuralBot*>(m_Players[id].get()); }
+    uint8_t nbPlayers() const { return m_NbPlayer; }
 
 private :
 

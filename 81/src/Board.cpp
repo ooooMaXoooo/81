@@ -1,6 +1,6 @@
 #include "Board.h"
 
-Board::Board(int size)
+Board::Board(uint size)
     : m_Size(size)
 {
     // reserve enough place for the vector since it's heap allocated (we avoid unnecessary reallocation)
@@ -44,9 +44,29 @@ void Board::Display() const
         {
             APPLY_YELLOW(m_Map[i]);
         }
+        else if (m_Map[i] == 5)
+        {
+            APPLY_PINK(m_Map[i]);
+        }
+        else if (m_Map[i] == 6)
+        {
+            APPLY_ORANGE(m_Map[i]);
+        }
+        else if (m_Map[i] == 7)
+        {
+            APPLY_BROWN(m_Map[i]);
+        }
+        else if (m_Map[i] == 8)
+        {
+            APPLY_CYAN(m_Map[i]);
+        }
+        else if (m_Map[i] == 9)
+        {
+            APPLY_GREY(m_Map[i]);
+        }
         else if (m_Map[i] == -1)
         {
-            APPLY_GREY('x');
+            APPLY_PURPLE('x');
         }
         else
         {

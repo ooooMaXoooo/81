@@ -56,6 +56,10 @@ NeuralNetwork::NeuralNetwork(uint nbEntries, uint nbOutputs, std::vector<uint> d
 
 		m_hidden_neurons.emplace_back(neurons);
 	}
+
+	// fill outputs to avoid access inexistant memory in the output function
+	fillVectorRNG(&m_outputs, m_nbOutputs);
+	fillVectorRNG(&m_outputsBias, m_nbOutputs);
 }
 
 NeuralNetwork::NeuralNetwork(const NeuralNetwork& NN)
@@ -77,29 +81,30 @@ NeuralNetwork::NeuralNetwork(const char* filepath)
 	loadFromFile(filepath);
 }
 
-std::array<float, 10> NeuralNetwork::output(const std::vector<float> entries_values)
+std::vector<float> NeuralNetwork::output(const std::vector<uint> entries_values)
 {
 
-	for (uint neuron_indice = 0; neuron_indice < m_nbEntries; neuron_indice++)
+	for (uint neuron_indice = 0; neuron_indice < m_dim_eachHiddenLayer[0]; neuron_indice++)
 	{
 		// store the result of the weighted sum in the neuron
 		m_hidden_neurons[0][neuron_indice].value = computeFirstLayerNeuronValue(entries_values, neuron_indice);
 	}
 
-
+	//std::cout << "\tFirst hidden layer computed\n";
 
 
 	// forward propagation in hidden layers
-	for (uint layer_indice = 1; layer_indice < m_nbHiddenlayers; layer_indice)
+	for (uint layer_indice = 1; layer_indice < m_nbHiddenlayers; layer_indice++)
 	{
 		for (uint neuron_indice = 0; neuron_indice < m_dim_eachHiddenLayer[layer_indice]; neuron_indice++)
 		{
 			// store the result of the weighted sum in the neuron
 			m_hidden_neurons[layer_indice][neuron_indice].value = computeNeuronValue(layer_indice, neuron_indice);
 		}
+		//std::cout << '\t' << layer_indice + 1 << "th hidden layer computed\n";
 	}
 
-
+	//std::cout << "\tAll hidden layer computed\n";
 
 	// compute the result in the last layer
 	for (uint neuron_indice = 0; neuron_indice < m_nbOutputs; neuron_indice++)
@@ -109,18 +114,7 @@ std::array<float, 10> NeuralNetwork::output(const std::vector<float> entries_val
 	}
 
 
-
-	// sort the outputs array
-	std::sort(m_outputs.begin(), m_outputs.end(), std::greater<int>());
-
-	std::array<float, 10> out;
-
-	for (uint i = 0; i < 10; i++)
-	{
-		out[i] = m_outputs[i];
-	}
-
-	return out;
+	return m_outputs;
 
 }
 
@@ -201,9 +195,63 @@ void NeuralNetwork::removeNeuron(uint layer, uint position)
 	m_dim_eachHiddenLayer[layer] -= 1;
 }
 
+Neuron NeuralNetwork::getNeuron(uint layer, uint neuron_position) const
+{
+	return m_hidden_neurons[layer][neuron_position];
+}
+
+void NeuralNetwork::changeNeuron(const Neuron& neuron, uint layer, uint neuron_position)
+{
+	const uint _SIZE_BEFORE = m_hidden_neurons[layer][neuron_position].weights.size();
+	const uint _SIZE_AFTER = neuron.weights.size();
+
+	if (_SIZE_AFTER > _SIZE_BEFORE)
+	{
+		const uint delta_size = _SIZE_AFTER - _SIZE_BEFORE;
+		
+		Neuron n(neuron);
+
+		n.weights.erase(n.weights.cend() - delta_size, n.weights.cend());
+
+
+		m_hidden_neurons[layer][neuron_position] = n;
+	}
+	else if (_SIZE_AFTER < _SIZE_BEFORE)
+	{
+		const uint delta_size = _SIZE_BEFORE - _SIZE_AFTER;
+		Neuron n(neuron);
+
+		n.weights.reserve(n.weights.capacity() + delta_size);
+
+		for (uint i = 0; i < delta_size; i++)
+		{
+			n.weights.emplace_back(m_hidden_neurons[layer][neuron_position].weights[i]);
+		}
+
+		m_hidden_neurons[layer][neuron_position] = n;
+	}
+	else
+	{
+		m_hidden_neurons[layer][neuron_position] = neuron;
+	}
+
+}
+
 void NeuralNetwork::changeWeight(uint layer, uint neuron_position, uint other_neuron_position, float value)
 {
 	m_hidden_neurons[layer][neuron_position].weights[other_neuron_position] = value;
+}
+
+float NeuralNetwork::getWeight(uint layer, uint neuron_position, uint weight_position)
+{
+	if (layer == 0) // entry layer
+	{
+		return m_entries_weights[neuron_position][weight_position];
+	}
+	else // hidden layer
+	{
+		return m_hidden_neurons[layer + 1][neuron_position].weights[weight_position];
+	}
 }
 
 void NeuralNetwork::saveConfig(const char* filepath) const
@@ -262,17 +310,17 @@ float NeuralNetwork::computeNeuronValue(uint layer_indice, uint neuron_position)
 }
 
 
-float NeuralNetwork::computeFirstLayerNeuronValue(const std::vector<float> entries_values, uint neuron_position) const
+float NeuralNetwork::computeFirstLayerNeuronValue(const std::vector<uint> entries_values, uint neuron_position) const
 {
 	// compute the weighted sum
 	// we start at the first neuron in the first hidden Layer
 	float weighted_sum = 0;
-	uint previousLayer_neuronIndice = 0;
+	uint neuron_on_entry_layer = 0;
 
-	while (previousLayer_neuronIndice < m_nbEntries)
+	while (neuron_on_entry_layer < m_nbEntries)
 	{
-		weighted_sum += entries_values[previousLayer_neuronIndice] * m_entries_weights[previousLayer_neuronIndice][neuron_position];
-		previousLayer_neuronIndice++;
+		weighted_sum += entries_values[neuron_on_entry_layer] * m_entries_weights[neuron_on_entry_layer][neuron_position];
+		neuron_on_entry_layer++;
 	}
 
 	// add the bias
