@@ -9,7 +9,7 @@ Human::Human(std::shared_ptr<Board> board, uint16_t id)
 
 void Human::Play()
 {
-    std::vector<uint>& board = m_Board->GetMap();
+    std::vector<short>& board = m_Board->GetMap();
     uint8_t pos = -1;
     std::string input = "";
     bool correct = false;
@@ -47,7 +47,6 @@ void Human::Play()
         return;*/
 
     m_LastPos = pos;
-    m_PlayedTiles.emplace_back(pos);
     m_Board->Update(pos, m_ID);
 
     // update datas

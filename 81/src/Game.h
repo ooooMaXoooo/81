@@ -33,13 +33,15 @@ private:
 
 
 public:
-    Game(const char* format);
+    Game(const char* format, const char* file = "\0null");
 
     ~Game();
 
     void Step();
 
     bool ShouldClose() const;
+
+    void restart();
 
 
     // AI stuff
@@ -48,6 +50,8 @@ public:
     std::vector<float> scores() const;
     NeuralBot getBot(uint8_t id) { return *static_cast<NeuralBot*>(m_Players[id].get()); }
     uint8_t nbPlayers() const { return m_NbPlayer; }
+
+    void changeBot(uint id, NeuralBot& neuralB);
 
 private :
 

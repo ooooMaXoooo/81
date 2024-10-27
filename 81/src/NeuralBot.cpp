@@ -14,18 +14,27 @@ NeuralBot::NeuralBot(const NeuralBot& neuralBot)
     : m_ntw(neuralBot.m_ntw), m_nbPlayer(neuralBot.m_nbPlayer), 
     Player{ neuralBot.m_Board, neuralBot.m_ID }
 {
+    //std::cout << "copy" << std::endl;
+}
+
+NeuralBot::NeuralBot(std::shared_ptr<Board> board, uint16_t id, uint8_t nbPlayers, const char* filepath)
+    : Player{ board, id },
+    m_ntw(NeuralNetwork(filepath)),
+    m_nbPlayer(nbPlayers)
+{
+
 }
 
 void NeuralBot::Play()
 {
-    uint8_t pos = -1;
+    int8_t pos = -1;
 
     // 4 entries : 
     //  the map
     //  the turn --> don't need
     //  the player id
     //  number of player
-    std::vector<uint> entries = m_Board->GetMap();
+    std::vector<short> entries = m_Board->GetMap();
     entries.reserve(entries.capacity() + 2);
 
     entries.emplace_back(m_ID);
@@ -33,9 +42,9 @@ void NeuralBot::Play()
 
     std::vector<float> proba = m_ntw.output(entries);
 
-    std::vector<std::pair<float, uint>> prob_pos;
+    std::vector<std::pair<float, uint8_t>> prob_pos;
 
-    const uint _SIZE = proba.size();
+    const uint8_t _SIZE = static_cast<uint8_t>(proba.size());
 
     prob_pos.reserve(_SIZE);
 
@@ -47,9 +56,9 @@ void NeuralBot::Play()
     std::sort(prob_pos.begin(), prob_pos.end());
 
     // from the most highest chance to the least one
-    for (uint i = _SIZE - 1; i > -1; i--)
+    for (int i = _SIZE - 1; i > -1; i--)
     {
-        const uint position = prob_pos[i].second;
+        const uint8_t position = prob_pos[i].second;
         if (position == m_LastPos
             || std::find(m_GreyTiles.begin(), m_GreyTiles.end(), position) != m_GreyTiles.end()
             || m_Board->GetMap()[position] != 0)
@@ -60,12 +69,14 @@ void NeuralBot::Play()
         pos = position;
         break;
     }
-   
-    std::cout << "Bot " << m_ID << " plays at " << (int)pos << std::endl;
-
+    
+    std::string out = "..";
+    convertPosNumber_to_Char(pos, &out);
+    std::cout << "\nBot " << m_ID << " plays at " << out << "\n\n" << std::endl;
+    
     m_LastPos = pos;
-    m_PlayedTiles.emplace_back(pos);
     m_Board->Update(pos, m_ID);
+    //m_Board->Display();
          
          
     Update_PositionScore_map(pos);
@@ -80,8 +91,9 @@ void NeuralBot::mutate()
     *       • add a neuron          --->    20%
     *       • remove a neuron       --->    10%
     */
+    int test = std::rand() % 2;
 
-    bool change_weight = std::rand() % 2;
+    bool change_weight = test;
     bool add_neuron    = !(std::rand() % 5);
     bool remove_neuron = !(std::rand() % 10);
 

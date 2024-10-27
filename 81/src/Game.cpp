@@ -1,13 +1,12 @@
 #include "Game.h"
 
-Game::Game(const char* format)
+Game::Game(const char* format, const char* file)
 {
     // read the format
     m_NbPlayer = format[0] - '0'; // convert char number to integer
 
 
     m_Board = std::make_shared<Board>(9);
-
 
     // initialize all players as humans
     m_Players.reserve(m_NbPlayer);
@@ -16,7 +15,28 @@ Game::Game(const char* format)
         if(format[i] == 'P')
             m_Players.emplace_back(std::make_unique<Human>(m_Board, i));
         else// format[i] == 'B'
-            m_Players.emplace_back(std::make_unique<NeuralBot>(m_Board, i, m_NbPlayer));
+        {
+            /*
+            if (file == "\0null")
+            {
+                m_Players.emplace_back(std::make_unique<NeuralBot>(m_Board, i, m_NbPlayer));
+            }
+            else
+            {
+                m_Players.emplace_back(std::make_unique<NeuralBot>(m_Board, i, m_NbPlayer, file));
+            }*/
+            
+            if (i == 1)
+            {
+                m_Players.emplace_back(std::make_unique<NeuralBot>(m_Board, i, m_NbPlayer, file));
+            }
+            else
+            {
+                std::string filepath = "./res/NTW/neural_bot_" + std::to_string(i+5) + ".ntw";
+                //m_Players.emplace_back(std::make_unique<NeuralBot>(m_Board, i, m_NbPlayer));
+                m_Players.emplace_back(std::make_unique<NeuralBot>(m_Board, i, m_NbPlayer, filepath.c_str()));
+            }
+        }
     }
 }
 
@@ -28,7 +48,10 @@ Game::~Game()
 
 void Game::Update()
 {
-    //CLEAR_SCREEN();
+    if (m_Turn % m_NbPlayer == m_NbPlayer - 1)
+    {
+        CLEAR_SCREEN();
+    }
 
     //remove GreyTiles of other players
     m_Players[m_Turn == 0 ? m_NbPlayer - 1 : m_Turn - 1]->ClearGreyTiles();
@@ -45,6 +68,7 @@ bool Game::ShouldClose() const
 {
     if (m_ShouldClose)
     {
+        
         //CLEAR_SCREEN();
         m_Board->Display();
         for (int i = 0; i < m_NbPlayer; i++)
@@ -60,12 +84,25 @@ bool Game::ShouldClose() const
     return m_ShouldClose;
 }
 
+void Game::restart()
+{
+    m_Board->reset();
+
+    for (int i = 0; i < m_NbPlayer; i++)
+    {
+        m_Players[i]->reset(i + 1, m_Board);
+    }
+
+    m_ShouldClose = false;
+    m_Turn = 0;
+}
+
 void Game::Play()
 {
     if (m_Board->IsFinish())
     {
         m_ShouldClose = true;
-        CLEAR_SCREEN();
+        //CLEAR_SCREEN();
         return;
     }
 
@@ -78,7 +115,10 @@ void Game::Play()
 void Game::Step()
 {
     Update();
-    Render();
+    if (m_Turn % m_NbPlayer == 0)
+    {
+        Render();
+    }
     Play();
 }
 
@@ -100,4 +140,10 @@ std::vector<float> Game::scores() const
     }
 
     return players_score;
+}
+
+void Game::changeBot(uint id, NeuralBot& neuralB)
+{
+    m_Players[id] = std::make_unique<NeuralBot>(neuralB);
+    m_Players[id]->reset(id + 1, m_Board);
 }

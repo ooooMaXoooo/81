@@ -35,9 +35,6 @@ protected:
     // tiles around the last played tile of the player
     std::vector<int> m_GreyTiles;
 
-    // all the tiles that have been played
-    static std::vector<int> m_PlayedTiles;
-
     // a pointer to the board -- shared with other players
     std::shared_ptr<Board> m_Board;
 
@@ -50,9 +47,6 @@ protected:
     // the array to store which area we own
     std::array<bool, 9> m_AreasStorage;
 
-    // a count of the number of players
-    //inline static uint8_t m_NbPlayers;
-
 public:
     Player(std::shared_ptr<Board> board, int id);
     ~Player();
@@ -63,12 +57,17 @@ public:
 
     virtual void Play();
 
-    float score();
+    float score() const;
 
     int id() const { return m_ID; }
+    void id(int id) { m_ID = id; }
 
     uint8_t LinearScore() const;
-    float AreaScore() const { return m_AreaScore * 0.5; }
+    float AreaScore() const { return m_AreaScore * 0.5f; }
+
+    void reset(int id, std::shared_ptr<Board>& board);
+
+    std::shared_ptr<Board>& getBoard() { return m_Board; }
 
 protected:
     void UpdateGreyTiles();

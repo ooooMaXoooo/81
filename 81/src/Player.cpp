@@ -6,17 +6,10 @@
 
 #include <assert.h>
 
-std::vector<int> Player::m_PlayedTiles;
-
-
-
 
 Player::Player(std::shared_ptr<Board> board, int id)
     : m_Board(board), m_AreaScore(0), m_ID(id)
 {
-    m_PlayedTiles.reserve(41);
-    //m_NbPlayers++;
-
     m_AreasStorage.fill(false);
 }
 
@@ -78,13 +71,14 @@ void Player::Play()
     Update_AreaScore(pos);*/
 }
 
-float Player::score()
+float Player::score() const
 {
-    return m_AreaScore * 0.5 + LinearScore();
+    return m_AreaScore * 0.5f + LinearScore();
 }
 
 void Player::UpdateGreyTiles()
 {
+    std::vector<short>& board = m_Board->GetMap();
     int boardSize = m_Board->Size();
 
     // right side
@@ -145,9 +139,9 @@ void Player::UpdateGreyTiles()
     const size_t size = m_GreyTiles.size();
     for (int i = 0; i < size; ++i)
     {
-        if ((std::find(m_PlayedTiles.begin(), m_PlayedTiles.end(), m_GreyTiles[count]) != std::end(m_PlayedTiles))
-            || m_GreyTiles[count] < 0
-            || m_GreyTiles[count] > 80)
+        if (   m_GreyTiles[count] < 0
+            || m_GreyTiles[count] > 80
+            || board[m_GreyTiles[count]] != 0)
         {
             m_GreyTiles.erase(m_GreyTiles.begin() + count);
             continue;
@@ -164,7 +158,7 @@ void Player::Update_PositionScore_map(uint8_t pos) {
     getNeighbors(neighbors, pos);
     // now all neighbors are valid and belong to different chain
     
-    const uint8_t SIZE = neighbors.size();
+    const uint8_t SIZE = static_cast<uint8_t>(neighbors.size());
 
     uint8_t main_head_pos;
 
@@ -225,7 +219,7 @@ void Player::Update_PositionScore_map(uint8_t pos) {
 void Player::getNeighbors(std::vector<uint8_t>& neighbors, uint8_t pos)
 {
     const int BOARD_SIZE = m_Board->Size();
-    std::vector<uint>& board = m_Board->GetMap();
+    std::vector<short>& board = m_Board->GetMap();
 
     // right side
     if ((pos + 1) % BOARD_SIZE == 0)
@@ -267,7 +261,7 @@ void Player::getNeighbors(std::vector<uint8_t>& neighbors, uint8_t pos)
 
     // keep only our own neighbors
     int count = 0;
-    const uint8_t SIZE = neighbors.size();
+    const uint8_t SIZE = static_cast<uint8_t>(neighbors.size());
 
     // a table to put all chains' head
     std::vector<uint8_t> head_map;
@@ -309,7 +303,7 @@ void Player::mergeChains(const std::vector<uint8_t>& neighbors)
     // we start at the second neighbor to merge all them into the first one
     // we know that we have at least 2 neighbors in the vector
 
-    const uint8_t SIZE = neighbors.size();
+    const uint8_t SIZE = static_cast<uint8_t>(neighbors.size());
     for (int i = 1; i < SIZE; i++)
     {
         m_PosScore_map[main_head_pos]->score += m_PosScore_map[neighbors[i]]->score;
@@ -336,14 +330,19 @@ uint8_t Player::LinearScore() const
     return max_score;
 }
 
+void Player::reset(int id, std::shared_ptr<Board>& board)
+{
+    m_Board = board;
+    m_ID = id;
 
+    m_AreaScore = 0;
 
+    m_LastPos = -11;
+    UpdateGreyTiles();
 
-
-
-
-
-
+    m_PosScore_map.clear();
+    m_AreasStorage.fill(false);
+}
 
 
 
@@ -375,7 +374,7 @@ bool Player::OwnCell(uint8_t cell_row, uint8_t cell_col) const
     std::unordered_map<uint8_t, uint8_t> slots_count;
 
     // the board on which we play
-    std::vector<uint>& board = m_Board->GetMap();
+    std::vector<short>& board = m_Board->GetMap();
 
     // an offset to look at the good positions. i.e. the right cell
     uint8_t offset = cell_row * 27 + cell_col * 3;
@@ -391,7 +390,7 @@ bool Player::OwnCell(uint8_t cell_row, uint8_t cell_col) const
     // look through each pos for the given cell
     for (auto position : firstCellPos)
     {
-        uint8_t owner = board[position + offset];
+        int8_t owner = static_cast<int8_t>(board[position + offset]);
         // removing blocked Tiles from our score since it doesn't matter to us
         if (owner == -1)
             continue;
@@ -542,9 +541,7 @@ bool Player::OwnCell(uint8_t cell_row, uint8_t cell_col) const
 
 void Player::GetPosCell(uint8_t pos, uint8_t& row, uint8_t& col) const
 {
-    const int size = m_Board->GetMap().size();
-
-    const uint8_t SQRT_SIZE = sqrt(size);
+    const uint8_t size = static_cast<uint8_t>(m_Board->Size());
 
     // the row and the column of the position in the board
     int row_pos{};
@@ -564,8 +561,8 @@ void Player::GetPosCell(uint8_t pos, uint8_t& row, uint8_t& col) const
 
 
     // convert each position in 2 dimensional board
-    row_pos = pos / SQRT_SIZE;
-    column_pos = (pos - row_pos * SQRT_SIZE);
+    row_pos = pos / size;
+    column_pos = (pos - row_pos * size);
 
     // convert the row and the column relative to a cell
     relative_row = row_pos % 3;

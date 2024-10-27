@@ -59,7 +59,6 @@ NeuralNetwork::NeuralNetwork(uint nbEntries, uint nbOutputs, std::vector<uint> d
 
 	// fill outputs to avoid access inexistant memory in the output function
 	fillVectorRNG(&m_outputs, m_nbOutputs);
-	fillVectorRNG(&m_outputsBias, m_nbOutputs);
 }
 
 NeuralNetwork::NeuralNetwork(const NeuralNetwork& NN)
@@ -68,7 +67,7 @@ NeuralNetwork::NeuralNetwork(const NeuralNetwork& NN)
 	m_entries_weights     =  NN.m_entries_weights;
 
 	m_nbOutputs           =  NN.m_nbOutputs;
-  //m_outputs             =  NN.m_outputs;
+    m_outputs             =  NN.m_outputs;
 	m_outputsBias         =  NN.m_outputsBias;
 
 	m_nbHiddenlayers      =  NN.m_nbHiddenlayers;
@@ -81,9 +80,8 @@ NeuralNetwork::NeuralNetwork(const char* filepath)
 	loadFromFile(filepath);
 }
 
-std::vector<float> NeuralNetwork::output(const std::vector<uint> entries_values)
+std::vector<float> NeuralNetwork::output(const std::vector<short> entries_values)
 {
-
 	for (uint neuron_indice = 0; neuron_indice < m_dim_eachHiddenLayer[0]; neuron_indice++)
 	{
 		// store the result of the weighted sum in the neuron
@@ -125,7 +123,7 @@ void NeuralNetwork::addNeuron(uint layer)
 
 	bias = ((rand() % 60000) - 30000)/ 10000.;
 
-	if (layer == m_nbHiddenlayers)
+	if (layer == m_nbHiddenlayers - 1)
 	{
 		// create link with next layer
 		fillVectorRNG(&weights, m_nbOutputs);
@@ -156,14 +154,14 @@ void NeuralNetwork::addNeuron(uint layer)
 		}
 		else
 		{
-			for (uint i = 0; i < m_nbEntries; i++)
+			for (uint i = 0; i < m_dim_eachHiddenLayer[layer-1]; i++)
 			{
 				m_hidden_neurons[layer - 1][i].weights.emplace_back(((rand() % 60000) - 30000) / 10000.);
 			}
 		}
 	}
 
-	m_hidden_neurons[m_dim_eachHiddenLayer[layer]].emplace_back(std::move(weights), bias);
+	m_hidden_neurons[layer].emplace_back(std::move(weights), bias);
 	
 		
 	m_dim_eachHiddenLayer[layer] += 1;
@@ -239,7 +237,17 @@ void NeuralNetwork::changeNeuron(const Neuron& neuron, uint layer, uint neuron_p
 
 void NeuralNetwork::changeWeight(uint layer, uint neuron_position, uint other_neuron_position, float value)
 {
-	m_hidden_neurons[layer][neuron_position].weights[other_neuron_position] = value;
+	if (layer == 0)
+	{
+		m_entries_weights[neuron_position][other_neuron_position] = value;
+	}
+	else
+	{
+		m_hidden_neurons[layer - 1][neuron_position].weights[other_neuron_position] = value;
+	}
+
+
+	
 }
 
 float NeuralNetwork::getWeight(uint layer, uint neuron_position, uint weight_position)
@@ -250,18 +258,25 @@ float NeuralNetwork::getWeight(uint layer, uint neuron_position, uint weight_pos
 	}
 	else // hidden layer
 	{
-		return m_hidden_neurons[layer + 1][neuron_position].weights[weight_position];
+		return m_hidden_neurons[layer - 1][neuron_position].weights[weight_position];
 	}
 }
 
 void NeuralNetwork::saveConfig(const char* filepath) const
 {
-	std::ofstream file(filepath);
+	std::cout << "\nSaving config at " << filepath << std::endl;
+
+	std::ofstream file;
+
+	file.open(filepath);
+
 	assert(file.is_open());
 	
 	const std::string config = getConfig();
 
 	file << config;
+
+	file.close();
 }
 
 void NeuralNetwork::loadFromFile(const char* filepath)
@@ -275,6 +290,8 @@ void NeuralNetwork::loadFromFile(const char* filepath)
 
 	m_nbOutputs = d_outputs;
 	m_outputsBias = out_Bias;
+	m_outputs.reserve(m_nbOutputs);
+	fillVectorRNG(&m_outputs, m_nbOutputs);
 
 	m_nbHiddenlayers = d_HLs;
 	m_dim_eachHiddenLayer = v_d_each_HL;
@@ -300,7 +317,7 @@ float NeuralNetwork::computeNeuronValue(uint layer_indice, uint neuron_position)
 
 
 	// add the bias
-	weighted_sum += m_hidden_neurons[layer_indice - 1][neuron_position].bias;
+	weighted_sum += m_hidden_neurons[layer_indice][neuron_position].bias;
 
 	// activation function
 	weighted_sum = ELU(weighted_sum);
@@ -310,7 +327,7 @@ float NeuralNetwork::computeNeuronValue(uint layer_indice, uint neuron_position)
 }
 
 
-float NeuralNetwork::computeFirstLayerNeuronValue(const std::vector<uint> entries_values, uint neuron_position) const
+float NeuralNetwork::computeFirstLayerNeuronValue(const std::vector<short> entries_values, uint neuron_position) const
 {
 	// compute the weighted sum
 	// we start at the first neuron in the first hidden Layer
@@ -354,7 +371,7 @@ float NeuralNetwork::computeLastLayerNeuronValue(uint neuron_position) const
 	// activation function
 	// we choose the sigmoid to interpret the result as the probability that the result is good
 	// for the 81, it represent the probability that a certain position is good
-	weighted_sum = sigmoid(weighted_sum);
+	weighted_sum = ELU(weighted_sum);
 
 	return weighted_sum;
 }
@@ -388,24 +405,63 @@ NNtwCaracteristics NeuralNetwork::parseFile(std::ifstream& fileStream)
 	ss >> caracteristics.d_entries;
 	ss >> caracteristics.d_HLs;
 
+	caracteristics.v_d_each_HL.reserve(caracteristics.d_HLs);
+
 	for (uint i = 0; i < caracteristics.d_HLs; i++)
 	{
+		caracteristics.v_d_each_HL.emplace_back(0); // we create a space to put the number into
 		ss >> caracteristics.v_d_each_HL[i];
 	}
 	ss >> caracteristics.d_outputs;
-
-	// the entries' weights
-	for (uint neuron_indice = 0; neuron_indice < caracteristics.d_entries; neuron_indice++)
+	
+	
 	{
-		for (uint weight_indice = 0; weight_indice < caracteristics.v_d_each_HL[0]; weight_indice++)
+		std::vector<float> temp_weights;
+		temp_weights.reserve(caracteristics.v_d_each_HL[0]);
+
+		for (int i = 0; i < caracteristics.v_d_each_HL[0]; i++)
 		{
-			ss >> caracteristics.in_Weights[neuron_indice][weight_indice];
+			temp_weights.emplace_back(0);
+		}
+
+		caracteristics.in_Weights.reserve(caracteristics.d_entries);
+		// the entries' weights
+		for (uint neuron_indice = 0; neuron_indice < caracteristics.d_entries; neuron_indice++)
+		{
+
+			caracteristics.in_Weights.emplace_back(temp_weights);
+			for (uint weight_indice = 0; weight_indice < caracteristics.v_d_each_HL[0]; weight_indice++)
+			{
+				ss >> caracteristics.in_Weights[neuron_indice][weight_indice];
+			}
 		}
 	}
+	
 
 	// each hidden layer except the last one
+	caracteristics.HNs.reserve(caracteristics.d_HLs);
 	for (uint layer_indice = 0; layer_indice < caracteristics.d_HLs - 1; layer_indice++)
 	{
+		std::vector<float> temp_weights;
+		temp_weights.reserve(caracteristics.v_d_each_HL[layer_indice + 1]);
+
+		for (int i = 0; i < caracteristics.v_d_each_HL[layer_indice + 1]; i++)
+		{
+			temp_weights.emplace_back(0);
+		}
+
+
+
+		std::vector<Neuron> vec;
+		vec.reserve(caracteristics.v_d_each_HL[layer_indice]);
+
+		for (int i = 0; i < caracteristics.v_d_each_HL[layer_indice]; i++)
+		{
+			vec.emplace_back(temp_weights, 0.0f);
+		}
+
+
+		caracteristics.HNs.emplace_back(vec);
 		for (uint neuron_indice = 0; neuron_indice < caracteristics.v_d_each_HL[layer_indice]; neuron_indice++)
 		{
 			for (uint weight_indice = 0; weight_indice < caracteristics.v_d_each_HL[layer_indice + 1]; weight_indice++)
@@ -415,28 +471,50 @@ NNtwCaracteristics NeuralNetwork::parseFile(std::ifstream& fileStream)
 			ss >> caracteristics.HNs[layer_indice][neuron_indice].bias;
 		}
 	}
-
-	// the last hidden layer
-	for (uint neuron_indice = 0; neuron_indice < caracteristics.v_d_each_HL[caracteristics.d_HLs - 1]; neuron_indice++)
+	
 	{
-		for (uint weight_indice = 0; weight_indice < caracteristics.d_outputs; weight_indice++)
+
+		std::vector<float> temp_weights;
+		temp_weights.reserve(caracteristics.d_outputs);
+
+		for (int i = 0; i < caracteristics.d_outputs; i++)
 		{
-			ss >> caracteristics.HNs[caracteristics.d_HLs - 1][neuron_indice].weights[weight_indice];
+			temp_weights.emplace_back(0);
 		}
-		ss >> caracteristics.HNs[caracteristics.d_HLs - 1][neuron_indice].bias;
+
+		
+		std::vector<Neuron> vec;
+		vec.reserve(caracteristics.v_d_each_HL[caracteristics.d_HLs - 1]);
+
+		for (int i = 0; i < caracteristics.v_d_each_HL[caracteristics.d_HLs - 1]; i++)
+		{
+			vec.emplace_back(temp_weights, 0.0f);
+		}
+
+		caracteristics.HNs.emplace_back(vec);
+		// the last hidden layer
+		for (uint neuron_indice = 0; neuron_indice < caracteristics.v_d_each_HL[caracteristics.d_HLs - 1]; neuron_indice++)
+		{
+			for (uint weight_indice = 0; weight_indice < caracteristics.d_outputs; weight_indice++)
+			{
+				ss >> caracteristics.HNs[caracteristics.d_HLs - 1][neuron_indice].weights[weight_indice];
+			}
+			ss >> caracteristics.HNs[caracteristics.d_HLs - 1][neuron_indice].bias;
+		}
 	}
 
+	caracteristics.out_Bias.reserve(caracteristics.d_outputs);
 	// the outputs' bias
 	for (uint neuron_indice = 0; neuron_indice < caracteristics.d_outputs; neuron_indice++)
 	{
+		caracteristics.out_Bias.emplace_back(0);
 		ss >> caracteristics.out_Bias[neuron_indice];
 	}
-
 
 	return caracteristics;
 }
 
-std::string&& NeuralNetwork::getConfig() const
+std::string NeuralNetwork::getConfig() const
 {
 	std::string config = "";
 
@@ -511,6 +589,6 @@ std::string&& NeuralNetwork::getConfig() const
 		config.append(" ");
 	}
 
-	return static_cast<std::string&&>(config);
+	return config;
 }
 

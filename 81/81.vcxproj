@@ -123,6 +123,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)utils</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -155,6 +156,26 @@
     <ClInclude Include="utils\data_structures\File.h" />
     <ClInclude Include="utils\data_structures\Pile.h" />
     <ClInclude Include="utils\utils.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\NTW\neural_bot_0.ntw" />
+    <None Include="res\NTW\neural_bot_1.ntw" />
+    <None Include="res\NTW\neural_bot_10.ntw" />
+    <None Include="res\NTW\neural_bot_11.ntw" />
+    <None Include="res\NTW\neural_bot_12.ntw" />
+    <None Include="res\NTW\neural_bot_13.ntw" />
+    <None Include="res\NTW\neural_bot_14.ntw" />
+    <None Include="res\NTW\neural_bot_15.ntw" />
+    <None Include="res\NTW\neural_bot_16.ntw" />
+    <None Include="res\NTW\neural_bot_17.ntw" />
+    <None Include="res\NTW\neural_bot_2.ntw" />
+    <None Include="res\NTW\neural_bot_3.ntw" />
+    <None Include="res\NTW\neural_bot_4.ntw" />
+    <None Include="res\NTW\neural_bot_5.ntw" />
+    <None Include="res\NTW\neural_bot_6.ntw" />
+    <None Include="res\NTW\neural_bot_7.ntw" />
+    <None Include="res\NTW\neural_bot_8.ntw" />
+    <None Include="res\NTW\neural_bot_9.ntw" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

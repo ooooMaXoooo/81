@@ -54,7 +54,7 @@ namespace utils
     }
 
     template<typename Ty>
-    void maxAndSecondMax(Ty* arr, unsigned int size, Ty& max, Ty& s_max) {
+    void maxAndSecondMax(Ty* arr, int size, Ty& max, Ty& s_max) {
         max = INT_MIN;
         s_max = INT_MIN;
 

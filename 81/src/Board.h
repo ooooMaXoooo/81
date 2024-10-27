@@ -55,7 +55,7 @@ private:
     // 1 for player 1 //
     //           ...            //
     // x for player x //
-    std::vector<uint> m_Map;
+    std::vector<short> m_Map;
 
 public:
     /*
@@ -80,7 +80,9 @@ public:
 
     bool IsFinish() const;
 
+    void reset();
 
-    std::vector<uint>& GetMap() { return m_Map; }
+
+    std::vector<short>& GetMap() { return m_Map; }
     int Size() const { return m_Size; }
 };

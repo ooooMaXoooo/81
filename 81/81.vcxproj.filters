@@ -81,4 +81,24 @@
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="res\NTW\neural_bot_0.ntw" />
+    <None Include="res\NTW\neural_bot_1.ntw" />
+    <None Include="res\NTW\neural_bot_2.ntw" />
+    <None Include="res\NTW\neural_bot_3.ntw" />
+    <None Include="res\NTW\neural_bot_4.ntw" />
+    <None Include="res\NTW\neural_bot_5.ntw" />
+    <None Include="res\NTW\neural_bot_6.ntw" />
+    <None Include="res\NTW\neural_bot_7.ntw" />
+    <None Include="res\NTW\neural_bot_8.ntw" />
+    <None Include="res\NTW\neural_bot_9.ntw" />
+    <None Include="res\NTW\neural_bot_17.ntw" />
+    <None Include="res\NTW\neural_bot_10.ntw" />
+    <None Include="res\NTW\neural_bot_11.ntw" />
+    <None Include="res\NTW\neural_bot_12.ntw" />
+    <None Include="res\NTW\neural_bot_13.ntw" />
+    <None Include="res\NTW\neural_bot_14.ntw" />
+    <None Include="res\NTW\neural_bot_15.ntw" />
+    <None Include="res\NTW\neural_bot_16.ntw" />
+  </ItemGroup>
 </Project>

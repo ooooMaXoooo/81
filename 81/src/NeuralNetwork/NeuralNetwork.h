@@ -73,7 +73,7 @@ public :
 
 
 
-	std::vector<float> output(const std::vector<uint> entries_values);
+	std::vector<float> output(const std::vector<short> entries_values);
 
 	void addNeuron(uint layer);
 	void removeNeuron(uint layer, uint position);
@@ -92,11 +92,11 @@ public :
 	void loadFromFile(const char* filepath);
 
 private :
-	float sigmoid(float x) const { return 1 / (1 + exp(-0.01*x)); }
+	float sigmoid(float x) const { return 1 / (1 + exp(-0.01f*x)); }
 	float ELU(float x) const { return x > 0 ? x : (exp(x) - 1); }
 
 	float computeNeuronValue(uint layer, uint position) const;
-	float computeFirstLayerNeuronValue(const std::vector<uint> entries_values, uint position) const;
+	float computeFirstLayerNeuronValue(const std::vector<short> entries_values, uint position) const;
 	float computeLastLayerNeuronValue(uint neuron_position) const;
 
 
@@ -104,5 +104,5 @@ private :
 
 	NNtwCaracteristics parseFile(std::ifstream& fileStream);
 
-	std::string&& getConfig() const;
+	std::string getConfig() const;
 };

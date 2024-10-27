@@ -45,9 +45,13 @@ public :
 	NeuralBot(std::shared_ptr<Board> board, uint16_t id, uint8_t nbPlayers);
 	NeuralBot(const NeuralBot& neuralBot);
 
-	void Play();
+	NeuralBot(std::shared_ptr<Board> board, uint16_t id, uint8_t nbPlayer, const char* filepath);
+
+	void Play() override;
 
 	NeuralNetwork* getPtr_Ntw() { return &m_ntw; }
 	
 	void mutate();
+
+	void setNumberPlayers(uint8_t nbPlayers) { m_nbPlayer = nbPlayers; }
 };

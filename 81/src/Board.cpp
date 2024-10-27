@@ -91,8 +91,19 @@ bool Board::IsFinish() const
     if (std::find(m_Map.begin(), m_Map.end(), 0) != std::end(m_Map))
     {
         // we found a 0
+        /*Display();
+        std::cout << "\n\n";*/
         return false;
     }
-    std::cout << "Finish !!!" << std::endl;
+    //std::cout << "Finish !!!" << std::endl;
     return true;
+}
+
+void Board::reset()
+{
+    const uint size = m_Size * m_Size;
+    for (int i = 0; i < size; ++i)
+    {
+        m_Map[i] = 0;
+    }
 }
